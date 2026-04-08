@@ -36,6 +36,13 @@
 - Ouverture automatique des fichiers `.gmr` reçus (association fichier)
 - Partage via le système natif du téléphone
 
+### 🎨 Personnalisation
+- Couleur du tracé utilisateur (8 couleurs)
+- Couleur du tracé ghost (7 couleurs)
+- Icône de position : points colorés, vélo, marcheur, pin
+- Icône du ghost : points colorés, fantôme, crâne, drapeau
+- Préférences persistées entre les sessions
+
 ### ⚙️ Paramètres
 - Choix du thème : Sombre, Clair, Midnight, Forêt
 - Thème persisté entre les sessions
@@ -56,7 +63,7 @@
 | **expo-file-system** | Gestion fichiers (export/import) |
 | **expo-sharing** | Partage natif |
 | **expo-document-picker** | Sélection fichiers (import) |
-| **react-native-reanimated** | Animations |
+
 
 ## Architecture
 
@@ -73,7 +80,7 @@ src/
 │   ├── ReplayScreen      # Relecture d'un parcours
 │   ├── GhostScreen       # Mode compétition contre le ghost
 │   └── SettingsScreen    # Paramètres, thèmes, import/export
-├── stores/           # Zustand stores (GPS, routes, replay, ghost, theme)
+├── stores/           # Zustand stores (GPS, routes, replay, ghost, theme, custom)
 ├── types/            # Interfaces TypeScript
 └── utils/            # Utilitaires (GPS, base de données)
 ```
@@ -120,9 +127,17 @@ eas build --profile production --platform android
 
 ## Version
 
-**0.9.2.0**
+**0.9.3.0**
 
 ### Changelog
+
+#### v0.9.3.0
+- Personnalisation visuelle : couleur du tracé, couleur ghost, icône utilisateur, icône ghost
+- Nouveau store `customStore` avec persistance AsyncStorage
+- Intégration custom dans MapScreen, GhostScreen, ReplayScreen
+- Ajout `babel.config.js` avec `babel-preset-expo`
+- Suppression de `react-native-reanimated` (inutilisé)
+- Correction erreurs TurboModule dans Expo Go
 
 #### v0.9.2.0
 - Remplacement de `react-native-maps` par `react-native-webview` + Leaflet.js (fix crash Android)

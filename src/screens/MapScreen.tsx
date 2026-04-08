@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGPSStore } from '../stores/gpsStore';
 import { useThemeStore } from '../stores/themeStore';
+import { useCustomStore } from '../stores/customStore';
 import { RootStackParamList } from '../types';
 import StatsOverlay from '../components/StatsOverlay';
 import LeafletMap, { MapPolyline, MapMarker } from '../components/LeafletMap';
@@ -15,6 +16,7 @@ export default function MapScreen() {
   const navigation = useNavigation<NavProp>();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const COLORS = useThemeStore((s) => s.colors);
+  const custom = useCustomStore();
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
 
   const {
@@ -91,15 +93,20 @@ export default function MapScreen() {
     return [{
       id: 'track',
       coordinates: points.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
-      color: COLORS.trackBlue,
+      color: custom.trackColor,
       width: 4,
     }];
-  }, [points, COLORS.trackBlue]);
+  }, [points, custom.trackColor]);
 
   const markers = useMemo<MapMarker[]>(() => {
     if (!currentPosition) return [];
-    return [{ id: 'user', coordinate: { latitude: currentPosition.latitude, longitude: currentPosition.longitude }, emoji: '📍' }];
-  }, [currentPosition]);
+    const isDot = custom.userIcon.endsWith('-dot');
+    return [{
+      id: 'user',
+      coordinate: { latitude: currentPosition.latitude, longitude: currentPosition.longitude },
+      emoji: isDot ? '●' : custom.userIcon,
+    }];
+  }, [currentPosition, custom.userIcon]);
 
   const currentSpeed = currentPosition?.speed ?? 0;
 
@@ -113,6 +120,7 @@ export default function MapScreen() {
         markers={markers}
         showUserLocation
         userLocation={currentPosition ? { latitude: currentPosition.latitude, longitude: currentPosition.longitude } : undefined}
+        userDotColor={custom.userIconColor || custom.trackColor}
       />
 
       {/* Version watermark */}

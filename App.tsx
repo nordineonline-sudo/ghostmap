@@ -8,12 +8,14 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { getDb } from './src/utils/database';
 import { insertRouteIfNotExists } from './src/utils/database';
 import { useThemeStore } from './src/stores/themeStore';
+import { useCustomStore } from './src/stores/customStore';
 import { useRouteStore } from './src/stores/routeStore';
 import { SavedRoute } from './src/types';
 
 export default function App() {
   const loadTheme = useThemeStore((s) => s.loadTheme);
   const themeName = useThemeStore((s) => s.themeName);
+  const loadCustom = useCustomStore((s) => s.loadCustom);
   const loadRoutes = useRouteStore((s) => s.loadRoutes);
 
   // Import a .gmr file from a URI
@@ -66,6 +68,7 @@ export default function App() {
   useEffect(() => {
     getDb().catch(console.error);
     loadTheme();
+    loadCustom();
   }, []);
 
   // Handle incoming .gmr files (deep link / file open)

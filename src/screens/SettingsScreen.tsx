@@ -14,6 +14,13 @@ import * as DocumentPicker from 'expo-document-picker';
 import { SPACING, FONT_SIZE, BORDER_RADIUS, ThemeName, THEME_LABELS, THEMES } from '../constants/theme';
 import { useRouteStore } from '../stores/routeStore';
 import { useThemeStore } from '../stores/themeStore';
+import {
+  useCustomStore,
+  TRACK_COLORS,
+  GHOST_COLORS,
+  USER_ICONS,
+  GHOST_ICONS,
+} from '../stores/customStore';
 import { SavedRoute } from '../types';
 
 const GMR_VERSION = 1;
@@ -28,6 +35,7 @@ interface GmrFile {
 export default function SettingsScreen() {
   const { routes, loadRoutes, addRoute } = useRouteStore();
   const { themeName, colors: COLORS, setTheme } = useThemeStore();
+  const custom = useCustomStore();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
 
@@ -198,6 +206,93 @@ export default function SettingsScreen() {
         ))}
       </View>
 
+      {/* Customization section */}
+      <Text style={[styles.sectionTitle, { color: COLORS.textSecondary }]}>Personnalisation</Text>
+
+      {/* Track color */}
+      <Text style={[styles.subLabel, { color: COLORS.text }]}>Couleur du tracé</Text>
+      <View style={styles.colorRow}>
+        {TRACK_COLORS.map((c) => (
+          <TouchableOpacity
+            key={c.value}
+            style={[
+              styles.colorCircle,
+              { backgroundColor: c.value, borderColor: custom.trackColor === c.value ? COLORS.text : 'transparent' },
+            ]}
+            onPress={() => custom.setTrackColor(c.value)}
+          />
+        ))}
+      </View>
+
+      {/* Ghost track color */}
+      <Text style={[styles.subLabel, { color: COLORS.text }]}>Couleur du tracé ghost</Text>
+      <View style={styles.colorRow}>
+        {GHOST_COLORS.map((c) => (
+          <TouchableOpacity
+            key={c.value}
+            style={[
+              styles.colorCircle,
+              { backgroundColor: c.value, borderColor: custom.ghostTrackColor === c.value ? COLORS.text : 'transparent' },
+            ]}
+            onPress={() => custom.setGhostTrackColor(c.value)}
+          />
+        ))}
+      </View>
+
+      {/* User icon */}
+      <Text style={[styles.subLabel, { color: COLORS.text }]}>Icône de position</Text>
+      <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
+        {USER_ICONS.map((item, idx) => (
+          <React.Fragment key={item.value}>
+            {idx > 0 && <View style={[styles.separator, { backgroundColor: COLORS.border }]} />}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => custom.setUserIcon(item.value, item.color)}
+              activeOpacity={0.7}
+            >
+              {item.value.endsWith('-dot') ? (
+                <View style={[styles.dotPreview, { backgroundColor: item.color }]} />
+              ) : (
+                <Text style={styles.actionIcon}>{item.value}</Text>
+              )}
+              <View style={styles.actionText}>
+                <Text style={[styles.actionLabel, { color: COLORS.text }]}>{item.label}</Text>
+              </View>
+              {custom.userIcon === item.value && (
+                <Text style={{ fontSize: 18, color: COLORS.primary }}>✓</Text>
+              )}
+            </TouchableOpacity>
+          </React.Fragment>
+        ))}
+      </View>
+
+      {/* Ghost icon */}
+      <Text style={[styles.subLabel, { color: COLORS.text }]}>Icône du ghost</Text>
+      <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
+        {GHOST_ICONS.map((item, idx) => (
+          <React.Fragment key={item.value}>
+            {idx > 0 && <View style={[styles.separator, { backgroundColor: COLORS.border }]} />}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => custom.setGhostIcon(item.value, item.color)}
+              activeOpacity={0.7}
+            >
+              {item.value.endsWith('-dot') ? (
+                <View style={[styles.dotPreview, { backgroundColor: item.color }]} />
+              ) : (
+                <Text style={styles.actionIcon}>{item.value}</Text>
+              )}
+              <View style={styles.actionText}>
+                <Text style={[styles.actionLabel, { color: COLORS.text }]}>{item.label}</Text>
+              </View>
+              {custom.ghostIcon === item.value && (
+                <Text style={{ fontSize: 18, color: COLORS.primary }}>✓</Text>
+              )}
+            </TouchableOpacity>
+          </React.Fragment>
+        ))}
+      </View>
+
       {/* Export / Import section */}
       <Text style={[styles.sectionTitle, { color: COLORS.textSecondary }]}>Import / Export (.gmr)</Text>
       <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
@@ -274,7 +369,7 @@ export default function SettingsScreen() {
       <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
         <View style={styles.aboutRow}>
           <Text style={[styles.aboutLabel, { color: COLORS.textSecondary }]}>Version</Text>
-          <Text style={[styles.aboutValue, { color: COLORS.text }]}>0.9.1.0</Text>
+          <Text style={[styles.aboutValue, { color: COLORS.text }]}>0.9.3.0</Text>
         </View>
         <View style={[styles.separator, { backgroundColor: COLORS.border }]} />
         <View style={styles.aboutRow}>
@@ -376,5 +471,29 @@ const styles = StyleSheet.create({
   aboutValue: {
     fontSize: FONT_SIZE.md,
     fontWeight: '600',
+  },
+  colorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  colorCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 3,
+  },
+  subLabel: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+    marginBottom: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  dotPreview: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    marginHorizontal: 5,
   },
 });

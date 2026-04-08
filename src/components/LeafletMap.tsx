@@ -31,6 +31,7 @@ interface Props {
   markers?: MapMarker[];
   showUserLocation?: boolean;
   userLocation?: LatLng;
+  userDotColor?: string;
   fitBounds?: { north: number; south: number; east: number; west: number };
   style?: ViewStyle;
 }
@@ -108,11 +109,14 @@ function handleMessage(data) {
         break;
       case 'setUserLocation':
         if (msg.lat != null && msg.lng != null) {
+          var c = msg.color || '#3B82F6';
+          var dotHtml = '<div style="width:14px;height:14px;background:'+c+';border:3px solid #fff;border-radius:50%;box-shadow:0 0 8px '+c+';"><\\/div>';
           if (!userMarker) {
-            var dot = L.divIcon({className:'',html:'<div class="user-dot"><\\/div>',iconSize:[20,20],iconAnchor:[10,10]});
+            var dot = L.divIcon({className:'',html:dotHtml,iconSize:[20,20],iconAnchor:[10,10]});
             userMarker = L.marker([msg.lat,msg.lng],{icon:dot,zIndexOffset:1000}).addTo(map);
           } else {
             userMarker.setLatLng([msg.lat,msg.lng]);
+            userMarker.setIcon(L.divIcon({className:'',html:dotHtml,iconSize:[20,20],iconAnchor:[10,10]}));
           }
         }
         break;
@@ -143,6 +147,7 @@ export default function LeafletMap({
   markers: markerProp,
   showUserLocation,
   userLocation,
+  userDotColor,
   fitBounds: fitBoundsProp,
   style,
 }: Props) {
@@ -193,11 +198,11 @@ export default function LeafletMap({
   useEffect(() => {
     const loc = userLocation ?? center;
     if (showUserLocation && loc) {
-      send({ type: 'setUserLocation', lat: loc.latitude, lng: loc.longitude });
+      send({ type: 'setUserLocation', lat: loc.latitude, lng: loc.longitude, color: userDotColor ?? '#3B82F6' });
     } else {
       send({ type: 'removeUserLocation' });
     }
-  }, [showUserLocation, userLocation?.latitude, userLocation?.longitude, center?.latitude, center?.longitude]);
+  }, [showUserLocation, userLocation?.latitude, userLocation?.longitude, center?.latitude, center?.longitude, userDotColor]);
 
   // Tile change
   useEffect(() => {

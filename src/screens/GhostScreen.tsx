@@ -9,6 +9,7 @@ import { useRouteStore } from '../stores/routeStore';
 import { RootStackParamList } from '../types';
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import { useThemeStore } from '../stores/themeStore';
+import { useCustomStore } from '../stores/customStore';
 import FloatingButton from '../components/FloatingButton';
 import StatsOverlay from '../components/StatsOverlay';
 import GhostIndicator from '../components/GhostIndicator';
@@ -23,6 +24,7 @@ export default function GhostScreen() {
   const ghostTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const themeColors = useThemeStore((s) => s.colors);
+  const custom = useCustomStore();
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
 
   // Stores
@@ -97,11 +99,11 @@ export default function GhostScreen() {
     const lines: MapPolyline[] = [];
     const ghostCoords = ghost.ghostPoints.map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
     if (ghostCoords.length >= 2) {
-      lines.push({ id: 'ghost-track', coordinates: ghostCoords, color: COLORS.trackGhost, width: 4, dashed: true });
+      lines.push({ id: 'ghost-track', coordinates: ghostCoords, color: custom.ghostTrackColor, width: 4, dashed: true });
     }
     const userCoords = gps.points.map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
     if (userCoords.length >= 2) {
-      lines.push({ id: 'user-track', coordinates: userCoords, color: COLORS.trackBlue, width: 4 });
+      lines.push({ id: 'user-track', coordinates: userCoords, color: custom.trackColor, width: 4 });
     }
     return lines;
   }, [ghost.ghostPoints, gps.points]);
@@ -110,13 +112,13 @@ export default function GhostScreen() {
   const markers = useMemo<MapMarker[]>(() => {
     const m: MapMarker[] = [];
     if (ghost.ghostPosition) {
-      m.push({ id: 'ghost', coordinate: { latitude: ghost.ghostPosition.latitude, longitude: ghost.ghostPosition.longitude }, emoji: '👻', opacity: 0.6 });
+      m.push({ id: 'ghost', coordinate: { latitude: ghost.ghostPosition.latitude, longitude: ghost.ghostPosition.longitude }, emoji: custom.ghostIcon.endsWith('-dot') ? '●' : custom.ghostIcon, opacity: 0.6 });
     }
     if (gps.currentPosition) {
-      m.push({ id: 'user', coordinate: { latitude: gps.currentPosition.latitude, longitude: gps.currentPosition.longitude }, emoji: route?.type === 'bike' ? '🚴' : '🚶' });
+      m.push({ id: 'user', coordinate: { latitude: gps.currentPosition.latitude, longitude: gps.currentPosition.longitude }, emoji: custom.userIcon.endsWith('-dot') ? '●' : custom.userIcon });
     }
     return m;
-  }, [ghost.ghostPosition, gps.currentPosition, route?.type]);
+  }, [ghost.ghostPosition, gps.currentPosition, custom.userIcon, custom.ghostIcon]);
 
   const handleStart = useCallback(async () => {
     if (gps.status === 'idle' || gps.status === 'stopped') {
@@ -148,6 +150,7 @@ export default function GhostScreen() {
         markers={markers}
         showUserLocation={isRecording}
         userLocation={gps.currentPosition ? { latitude: gps.currentPosition.latitude, longitude: gps.currentPosition.longitude } : undefined}
+        userDotColor={custom.userIconColor || custom.trackColor}
         style={styles.map}
       />
 

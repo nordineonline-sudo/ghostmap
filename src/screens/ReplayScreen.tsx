@@ -8,6 +8,7 @@ import { useReplayStore } from '../stores/replayStore';
 import { RootStackParamList, PlaybackSpeed } from '../types';
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import { useThemeStore } from '../stores/themeStore';
+import { useCustomStore } from '../stores/customStore';
 import { formatDistance, formatSpeed, formatDuration, msToKmh } from '../utils/gps';
 import FloatingButton from '../components/FloatingButton';
 import SpeedSelector from '../components/SpeedSelector';
@@ -21,6 +22,7 @@ export default function ReplayScreen() {
   const { params } = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavProp>();
   const themeColors = useThemeStore((s) => s.colors);
+  const custom = useCustomStore();
   const { getRoute, loadRoutes, routes } = useRouteStore();
   const {
     points: replayPoints,
@@ -88,7 +90,7 @@ export default function ReplayScreen() {
       lines.push({
         id: 'ghost-track',
         coordinates: allCoords,
-        color: COLORS.ghostOverlay,
+        color: custom.ghostTrackColor,
         width: 3,
         dashed: true,
       });
@@ -98,7 +100,7 @@ export default function ReplayScreen() {
       lines.push({
         id: 'replay-track',
         coordinates: current,
-        color: COLORS.trackBlue,
+        color: custom.trackColor,
         width: 4,
       });
     }
@@ -111,7 +113,7 @@ export default function ReplayScreen() {
     return [{
       id: 'cursor',
       coordinate: { latitude: currentPoint.latitude, longitude: currentPoint.longitude },
-      emoji: route?.type === 'bike' ? '🚴' : '🚶',
+      emoji: custom.userIcon.endsWith('-dot') ? '●' : custom.userIcon,
     }];
   }, [currentPoint, route?.type]);
 
