@@ -8,6 +8,7 @@ import { useRouteStore } from '../stores/routeStore';
 import { useReplayStore } from '../stores/replayStore';
 import { RootStackParamList, PlaybackSpeed } from '../types';
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
 import { formatDistance, formatSpeed, formatDuration, msToKmh } from '../utils/gps';
 import FloatingButton from '../components/FloatingButton';
 import SpeedSelector from '../components/SpeedSelector';
@@ -19,6 +20,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ReplayScreen() {
   const { params } = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavProp>();
+  const themeColors = useThemeStore((s) => s.colors);
   const { getRoute, loadRoutes, routes } = useRouteStore();
   const {
     points: replayPoints,
@@ -113,7 +115,7 @@ export default function ReplayScreen() {
       >
         {/* OpenStreetMap tiles */}
         <UrlTile
-          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          urlTemplate={themeColors.tileUrl}
           maximumZ={19}
           flipY={false}
           tileSize={256}

@@ -4,11 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text } from 'react-native';
 import { RootStackParamList, BottomTabParamList } from '../types';
-import { COLORS, FONT_SIZE } from '../constants/theme';
+import { FONT_SIZE } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
 
 // Screens
 import MapScreen from '../screens/MapScreen';
 import LibraryScreen from '../screens/LibraryScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import RecordingScreen from '../screens/RecordingScreen';
 import SaveRouteScreen from '../screens/SaveRouteScreen';
 import ReplayScreen from '../screens/ReplayScreen';
@@ -18,20 +20,22 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 function MainTabs() {
+  const colors = useThemeStore((s) => s.colors);
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: COLORS.surface,
-          borderTopColor: COLORS.border,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: {
           fontSize: FONT_SIZE.xs,
           fontWeight: '600',
@@ -58,24 +62,36 @@ function MainTabs() {
           ),
         }}
       />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          tabBarLabel: 'Paramètres',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: 22 }}>{focused ? '⚙️' : '⚙️'}</Text>
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
 
 export default function AppNavigator() {
+  const colors = useThemeStore((s) => s.colors);
+
   return (
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
-            backgroundColor: COLORS.background,
+            backgroundColor: colors.background,
           },
-          headerTintColor: COLORS.text,
+          headerTintColor: colors.text,
           headerTitleStyle: {
             fontWeight: '700',
           },
           contentStyle: {
-            backgroundColor: COLORS.background,
+            backgroundColor: colors.background,
           },
         }}
       >

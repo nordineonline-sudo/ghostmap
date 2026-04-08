@@ -6,8 +6,9 @@
 
 ### 🗺️ Enregistrement GPS
 - Suivi en temps réel de la position, vitesse et altitude
-- Tracé du parcours sur carte OpenStreetMap
+- Tracé du parcours sur carte (Carto / OpenStreetMap)
 - Statistiques en direct : distance, vitesse, durée
+- Boutons compacts en bas à droite (enregistrer + centrer position)
 
 ### 📚 Bibliothèque de parcours
 - Sauvegarde locale des parcours (SQLite)
@@ -27,6 +28,17 @@
 - Indicateur de delta temporel en temps réel (avance/retard)
 - Détection automatique du dépassement du ghost 🏆
 
+### 📤 Import / Export (.gmr)
+- Export de tous les parcours ou individuellement
+- Format propriétaire `.gmr` (GhostMap Record)
+- Import avec dédoublonnage automatique
+- Partage via le système natif du téléphone
+
+### ⚙️ Paramètres
+- Choix du thème : Sombre, Clair, Midnight, Forêt
+- Thème persisté entre les sessions
+- Les tuiles de carte s'adaptent au thème choisi
+
 ## Stack technique
 
 | Technologie | Usage |
@@ -39,6 +51,9 @@
 | **expo-sqlite** | Base de données locale |
 | **react-native-maps** | Cartographie OpenStreetMap |
 | **React Navigation** 7 | Navigation (Stack + Tabs) |
+| **expo-file-system** | Gestion fichiers (export/import) |
+| **expo-sharing** | Partage natif |
+| **expo-document-picker** | Sélection fichiers (import) |
 | **react-native-reanimated** | Animations |
 
 ## Architecture
@@ -54,8 +69,9 @@ src/
 │   ├── SaveRouteScreen   # Sauvegarde du parcours
 │   ├── LibraryScreen     # Bibliothèque des parcours
 │   ├── ReplayScreen      # Relecture d'un parcours
-│   └── GhostScreen       # Mode compétition contre le ghost
-├── stores/           # Zustand stores (GPS, routes, replay, ghost)
+│   ├── GhostScreen       # Mode compétition contre le ghost
+│   └── SettingsScreen    # Paramètres, thèmes, import/export
+├── stores/           # Zustand stores (GPS, routes, replay, ghost, theme)
 ├── types/            # Interfaces TypeScript
 └── utils/            # Utilitaires (GPS, base de données)
 ```
@@ -64,7 +80,7 @@ src/
 
 ```bash
 # Cloner le projet
-git clone https://github.com/<user>/ghostmap.git
+git clone https://github.com/nordineonline-sudo/ghostmap.git
 cd ghostmap
 
 # Installer les dépendances
@@ -102,7 +118,7 @@ eas build --profile production --platform android
 
 ## Version
 
-**0.9.0.0**
+**0.9.1.0**
 
 ## Licence
 

@@ -9,6 +9,7 @@ import { useGhostStore } from '../stores/ghostStore';
 import { useRouteStore } from '../stores/routeStore';
 import { RootStackParamList } from '../types';
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
 import FloatingButton from '../components/FloatingButton';
 import StatsOverlay from '../components/StatsOverlay';
 import GhostIndicator from '../components/GhostIndicator';
@@ -22,6 +23,7 @@ export default function GhostScreen() {
   const mapRef = useRef<MapView>(null);
   const ghostTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const themeColors = useThemeStore((s) => s.colors);
 
   // Stores
   const { getRoute, loadRoutes, routes } = useRouteStore();
@@ -149,7 +151,7 @@ export default function GhostScreen() {
       >
         {/* OpenStreetMap tiles */}
         <UrlTile
-          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          urlTemplate={themeColors.tileUrl}
           maximumZ={19}
           flipY={false}
           tileSize={256}

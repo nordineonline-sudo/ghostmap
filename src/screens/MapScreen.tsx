@@ -4,9 +4,8 @@ import MapView, { Polyline, Marker, UrlTile } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGPSStore } from '../stores/gpsStore';
+import { useThemeStore } from '../stores/themeStore';
 import { RootStackParamList } from '../types';
-import { COLORS } from '../constants/theme';
-import FloatingButton from '../components/FloatingButton';
 import StatsOverlay from '../components/StatsOverlay';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -15,6 +14,7 @@ export default function MapScreen() {
   const navigation = useNavigation<NavProp>();
   const mapRef = useRef<MapView>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const COLORS = useThemeStore((s) => s.colors);
 
   const {
     status,
@@ -77,17 +77,34 @@ export default function MapScreen() {
     }
   }, [status, startTracking, stopTracking, navigation]);
 
-  const centerOnUser = useCallback(() => {
-    if (currentPosition && mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: currentPosition.latitude,
-          longitude: currentPosition.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        },
-        500,
-      );
+  const centerOnUser = useCallback(async () => {
+    if (mapRef.current) {
+      try {
+        const loc = await import('expo-location').then((m) =>
+          m.getCurrentPositionAsync({ accuracy: m.Accuracy.Balanced }),
+        );
+        mapRef.current.animateToRegion(
+          {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          },
+          500,
+        );
+      } catch {
+        if (currentPosition) {
+          mapRef.current.animateToRegion(
+            {
+              latitude: currentPosition.latitude,
+              longitude: currentPosition.longitude,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            },
+            500,
+          );
+        }
+      }
     }
   }, [currentPosition]);
 
@@ -107,22 +124,20 @@ export default function MapScreen() {
         showsMyLocationButton={false}
         followsUserLocation={status === 'recording'}
         initialRegion={{
-          latitude: 48.8566, // Paris default
+          latitude: 48.8566,
           longitude: 2.3522,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
         mapType="none"
       >
-        {/* OpenStreetMap tiles */}
         <UrlTile
-          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          urlTemplate={COLORS.tileUrl}
           maximumZ={19}
           flipY={false}
           tileSize={256}
         />
 
-        {/* Blue trace of the recorded path */}
         {polylineCoords.length >= 2 && (
           <Polyline
             coordinates={polylineCoords}
@@ -133,7 +148,6 @@ export default function MapScreen() {
           />
         )}
 
-        {/* Current position marker */}
         {currentPosition && (
           <Marker
             coordinate={{
@@ -145,33 +159,45 @@ export default function MapScreen() {
         )}
       </MapView>
 
-      {/* Stats overlay during recording */}
+      {/* Version watermark */}
+      <Text style={styles.versionBadge}>
+        GhostMap v0.9.1.0{'\n'}mehiradev corp{'\n'}powered by Claude
+      </Text>
+
+      {/* Compact stats during recording */}
       {status === 'recording' && (
-        <StatsOverlay
-          distance={distance}
-          speed={currentSpeed}
-          elapsed={elapsed}
-        />
+        <View style={styles.statsBar}>
+          <StatsOverlay
+            distance={distance}
+            speed={currentSpeed}
+            elapsed={elapsed}
+            compact
+          />
+        </View>
       )}
 
-      {/* My location button */}
-      <TouchableOpacity
-        style={styles.myLocationBtn}
-        onPress={centerOnUser}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.myLocationIcon}>📍</Text>
-      </TouchableOpacity>
+      {/* Right-side small buttons */}
+      <View style={styles.sideButtons}>
+        <TouchableOpacity
+          style={styles.sideBtn}
+          onPress={centerOnUser}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.sideBtnIcon}>📍</Text>
+        </TouchableOpacity>
 
-      {/* Floating record button */}
-      <View style={styles.buttonContainer}>
-        <FloatingButton
-          icon={status === 'recording' ? '⏹' : '▶'}
-          label={status === 'recording' ? 'Arrêter' : 'Enregistrer'}
-          variant={status === 'recording' ? 'danger' : 'primary'}
-          size="lg"
+        <TouchableOpacity
+          style={[
+            styles.sideBtn,
+            { backgroundColor: status === 'recording' ? COLORS.danger : COLORS.primary },
+          ]}
           onPress={handleStartStop}
-        />
+          activeOpacity={0.7}
+        >
+          <Text style={styles.sideBtnIcon}>
+            {status === 'recording' ? '⏹' : '⏺'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -184,13 +210,31 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-  myLocationBtn: {
+  versionBadge: {
     position: 'absolute',
-    bottom: 110,
-    right: 16,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    top: 50,
+    right: 8,
+    fontSize: 8,
+    color: 'rgba(255,255,255,0.3)',
+    textAlign: 'right',
+    lineHeight: 11,
+  },
+  statsBar: {
+    position: 'absolute',
+    bottom: 16,
+    left: 12,
+    right: 60,
+  },
+  sideButtons: {
+    position: 'absolute',
+    bottom: 16,
+    right: 12,
+    gap: 10,
+  },
+  sideBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: 'rgba(15, 23, 42, 0.85)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -200,12 +244,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  myLocationIcon: {
-    fontSize: 22,
-  },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
+  sideBtnIcon: {
+    fontSize: 18,
   },
 });
