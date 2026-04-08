@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "GhostMap",
+    "slug": "ghostmap",
+    "version": "0.9.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F172A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ghostmap.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "GhostMap utilise votre position pour enregistrer vos parcours vélo et marche.",
+        "NSLocationAlwaysUsageDescription": "GhostMap utilise votre position en arrière-plan pour le suivi de parcours."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F172A"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.ghostmap.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "GhostMap utilise votre position pour le suivi GPS de vos parcours.",
+          "locationAlwaysPermission": "GhostMap utilise votre position en arrière-plan pour le suivi continu.",
+          "locationWhenInUsePermission": "GhostMap utilise votre position pour enregistrer vos parcours."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "254cedfd-e00e-4b81-8e1b-cc330234fc84"
+      }
+    }
+  }
+}
