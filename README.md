@@ -28,10 +28,12 @@
 - Indicateur de delta temporel en temps réel (avance/retard)
 - Détection automatique du dépassement du ghost 🏆
 
-### 📤 Import / Export (.gmr)
+### 📤 Import / Export / Partage (.gmr)
 - Export de tous les parcours ou individuellement
 - Format propriétaire `.gmr` (GhostMap Record)
 - Import avec dédoublonnage automatique
+- **Partage direct** d'un parcours depuis la bibliothèque (WhatsApp, mail, etc.)
+- Ouverture automatique des fichiers `.gmr` reçus (association fichier)
 - Partage via le système natif du téléphone
 
 ### ⚙️ Paramètres
@@ -49,7 +51,7 @@
 | **Zustand** 5 | State management |
 | **expo-location** | Suivi GPS |
 | **expo-sqlite** | Base de données locale |
-| **react-native-maps** | Cartographie OpenStreetMap |
+| **react-native-webview** | Cartographie Leaflet.js |
 | **React Navigation** 7 | Navigation (Stack + Tabs) |
 | **expo-file-system** | Gestion fichiers (export/import) |
 | **expo-sharing** | Partage natif |
@@ -118,7 +120,28 @@ eas build --profile production --platform android
 
 ## Version
 
-**0.9.1.0**
+**0.9.2.0**
+
+### Changelog
+
+#### v0.9.2.0
+- Remplacement de `react-native-maps` par `react-native-webview` + Leaflet.js (fix crash Android)
+- Nouveau composant `LeafletMap` réutilisable (polylines, markers, user location, fit bounds)
+- Bouton de partage 📤 sur chaque parcours dans la bibliothèque
+- Association fichier `.gmr` : ouvrir un fichier .gmr lance GhostMap et importe le parcours
+- Import automatique au lancement si l'app est ouverte via un fichier .gmr
+- Migration vers `expo-file-system/legacy` (compatibilité Expo SDK 54)
+- Correction mimeType pour le partage de fichiers
+
+#### v0.9.1.0
+- 4 thèmes (Sombre, Clair, Midnight, Forêt) avec persistance
+- Import/Export au format .gmr
+- Nouvelle icône vectorielle (ghost à vélo)
+- Écran Paramètres
+
+#### v0.9.0.0
+- Version initiale
+- Enregistrement GPS, bibliothèque, replay, mode ghost
 
 ## Licence
 

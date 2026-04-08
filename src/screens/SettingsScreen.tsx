@@ -8,7 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { SPACING, FONT_SIZE, BORDER_RADIUS, ThemeName, THEME_LABELS, THEMES } from '../constants/theme';
@@ -49,15 +49,14 @@ export default function SettingsScreen() {
       const fileName = `ghostmap_export_${Date.now()}.gmr`;
       const filePath = `${FileSystem.cacheDirectory}${fileName}`;
       await FileSystem.writeAsStringAsync(filePath, JSON.stringify(gmr), {
-        encoding: FileSystem.EncodingType.UTF8,
+        encoding: 'utf8',
       });
 
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
         await Sharing.shareAsync(filePath, {
-          mimeType: 'application/json',
+          mimeType: 'application/octet-stream',
           dialogTitle: 'Exporter les parcours GhostMap',
-          UTI: 'public.json',
         });
       } else {
         Alert.alert('Exporté', `Fichier sauvegardé: ${fileName}`);
@@ -83,15 +82,14 @@ export default function SettingsScreen() {
       const fileName = `${safeName}.gmr`;
       const filePath = `${FileSystem.cacheDirectory}${fileName}`;
       await FileSystem.writeAsStringAsync(filePath, JSON.stringify(gmr), {
-        encoding: FileSystem.EncodingType.UTF8,
+        encoding: 'utf8',
       });
 
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
         await Sharing.shareAsync(filePath, {
-          mimeType: 'application/json',
+          mimeType: 'application/octet-stream',
           dialogTitle: `Exporter "${route.name}"`,
-          UTI: 'public.json',
         });
       }
     } catch (e) {
@@ -122,7 +120,7 @@ export default function SettingsScreen() {
       }
 
       const content = await FileSystem.readAsStringAsync(asset.uri, {
-        encoding: FileSystem.EncodingType.UTF8,
+        encoding: 'utf8',
       });
 
       let gmr: GmrFile;

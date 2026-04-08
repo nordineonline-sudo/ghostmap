@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import MapView, { Polyline, Marker, UrlTile } from 'react-native-maps';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,6 +12,7 @@ import { formatDistance, formatSpeed, formatDuration, msToKmh } from '../utils/g
 import FloatingButton from '../components/FloatingButton';
 import SpeedSelector from '../components/SpeedSelector';
 import ProgressBar from '../components/ProgressBar';
+import LeafletMap, { MapPolyline, MapMarker } from '../components/LeafletMap';
 
 type ScreenRouteProp = RouteProp<RootStackParamList, 'Replay'>;
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -62,38 +62,58 @@ export default function ReplayScreen() {
 
   const route = getRoute(params.routeId);
 
-  const polylineCoords = useMemo(
-    () => replayPoints.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
-    [replayPoints],
-  );
-
-  // Current track = points up to current index
-  const currentTrack = useMemo(
-    () => polylineCoords.slice(0, currentIndex + 1),
-    [polylineCoords, currentIndex],
-  );
-
   // Current position
   const currentPoint = replayPoints[currentIndex];
   const progress = totalDuration > 0 ? elapsedMs / (totalDuration * 1000) : 0;
   const elapsedSec = elapsedMs / 1000;
 
-  // Map region — center on the route
-  const mapRegion = useMemo(() => {
+  // Fit bounds for the route
+  const fitBounds = useMemo(() => {
     if (replayPoints.length === 0) return undefined;
     const lats = replayPoints.map((p) => p.latitude);
     const lngs = replayPoints.map((p) => p.longitude);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
     return {
-      latitude: (minLat + maxLat) / 2,
-      longitude: (minLng + maxLng) / 2,
-      latitudeDelta: (maxLat - minLat) * 1.3 + 0.002,
-      longitudeDelta: (maxLng - minLng) * 1.3 + 0.002,
+      north: Math.max(...lats),
+      south: Math.min(...lats),
+      east: Math.max(...lngs),
+      west: Math.min(...lngs),
     };
   }, [replayPoints]);
+
+  // Polylines: ghost track + animated track
+  const polylines = useMemo<MapPolyline[]>(() => {
+    const lines: MapPolyline[] = [];
+    const allCoords = replayPoints.map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
+    if (allCoords.length >= 2) {
+      lines.push({
+        id: 'ghost-track',
+        coordinates: allCoords,
+        color: COLORS.ghostOverlay,
+        width: 3,
+        dashed: true,
+      });
+    }
+    const current = allCoords.slice(0, currentIndex + 1);
+    if (current.length >= 2) {
+      lines.push({
+        id: 'replay-track',
+        coordinates: current,
+        color: COLORS.trackBlue,
+        width: 4,
+      });
+    }
+    return lines;
+  }, [replayPoints, currentIndex]);
+
+  // Cursor marker
+  const markers = useMemo<MapMarker[]>(() => {
+    if (!currentPoint) return [];
+    return [{
+      id: 'cursor',
+      coordinate: { latitude: currentPoint.latitude, longitude: currentPoint.longitude },
+      emoji: route?.type === 'bike' ? '🚴' : '🚶',
+    }];
+  }, [currentPoint, route?.type]);
 
   if (!route) {
     return (
@@ -108,53 +128,13 @@ export default function ReplayScreen() {
   return (
     <View style={styles.container}>
       {/* Map */}
-      <MapView
+      <LeafletMap
+        tileUrl={themeColors.tileUrl}
+        fitBounds={fitBounds}
+        polylines={polylines}
+        markers={markers}
         style={styles.map}
-        initialRegion={mapRegion}
-        mapType="none"
-      >
-        {/* OpenStreetMap tiles */}
-        <UrlTile
-          urlTemplate={themeColors.tileUrl}
-          maximumZ={19}
-          flipY={false}
-          tileSize={256}
-        />
-
-        {/* Full ghost track (faint) */}
-        {polylineCoords.length >= 2 && (
-          <Polyline
-            coordinates={polylineCoords}
-            strokeColor={COLORS.ghostOverlay}
-            strokeWidth={3}
-            lineDashPattern={[10, 5]}
-          />
-        )}
-
-        {/* Animated replay track (blue) */}
-        {currentTrack.length >= 2 && (
-          <Polyline
-            coordinates={currentTrack}
-            strokeColor={COLORS.trackBlue}
-            strokeWidth={4}
-            lineCap="round"
-          />
-        )}
-
-        {/* Cursor marker */}
-        {currentPoint && (
-          <Marker
-            coordinate={{
-              latitude: currentPoint.latitude,
-              longitude: currentPoint.longitude,
-            }}
-          >
-            <View style={styles.markerContainer}>
-              <Text style={styles.markerIcon}>{icon}</Text>
-            </View>
-          </Marker>
-        )}
-      </MapView>
+      />
 
       {/* Bottom controls overlay */}
       <View style={styles.controls}>
@@ -290,18 +270,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     marginTop: SPACING.sm,
-  },
-  markerContainer: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 4,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  markerIcon: {
-    fontSize: 24,
   },
 });

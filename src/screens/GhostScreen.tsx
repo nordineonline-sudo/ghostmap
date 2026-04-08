@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import MapView, { Polyline, Marker, UrlTile } from 'react-native-maps';
+import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,6 +12,7 @@ import { useThemeStore } from '../stores/themeStore';
 import FloatingButton from '../components/FloatingButton';
 import StatsOverlay from '../components/StatsOverlay';
 import GhostIndicator from '../components/GhostIndicator';
+import LeafletMap, { MapPolyline, MapMarker } from '../components/LeafletMap';
 
 type ScreenRouteProp = RouteProp<RootStackParamList, 'Ghost'>;
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -20,10 +20,10 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 export default function GhostScreen() {
   const { params } = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavProp>();
-  const mapRef = useRef<MapView>(null);
   const ghostTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const themeColors = useThemeStore((s) => s.colors);
+  const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
 
   // Stores
   const { getRoute, loadRoutes, routes } = useRouteStore();
@@ -42,6 +42,13 @@ export default function GhostScreen() {
       ghost.loadGhost(route.points);
     }
   }, [params.routeId, routes]);
+
+  // Set initial center from ghost points
+  useEffect(() => {
+    if (ghost.ghostPoints.length > 0 && !mapCenter) {
+      setMapCenter({ latitude: ghost.ghostPoints[0].latitude, longitude: ghost.ghostPoints[0].longitude });
+    }
+  }, [ghost.ghostPoints]);
 
   // Ghost animation timer
   useEffect(() => {
@@ -68,20 +75,12 @@ export default function GhostScreen() {
     };
   }, [gps.status]);
 
-  // Center map on user position
+  // Center map on user position during recording
   useEffect(() => {
-    if (gps.currentPosition && mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: gps.currentPosition.latitude,
-          longitude: gps.currentPosition.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        },
-        500,
-      );
+    if (gps.currentPosition && gps.status === 'recording') {
+      setMapCenter({ latitude: gps.currentPosition.latitude, longitude: gps.currentPosition.longitude });
     }
-  }, [gps.currentPosition]);
+  }, [gps.currentPosition, gps.status]);
 
   // Cleanup
   useEffect(() => {
@@ -93,25 +92,31 @@ export default function GhostScreen() {
 
   const route = getRoute(params.routeId);
 
-  // Ghost polyline
-  const ghostPolyline = useMemo(
-    () =>
-      ghost.ghostPoints.map((p) => ({
-        latitude: p.latitude,
-        longitude: p.longitude,
-      })),
-    [ghost.ghostPoints],
-  );
+  // Polylines
+  const polylines = useMemo<MapPolyline[]>(() => {
+    const lines: MapPolyline[] = [];
+    const ghostCoords = ghost.ghostPoints.map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
+    if (ghostCoords.length >= 2) {
+      lines.push({ id: 'ghost-track', coordinates: ghostCoords, color: COLORS.trackGhost, width: 4, dashed: true });
+    }
+    const userCoords = gps.points.map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
+    if (userCoords.length >= 2) {
+      lines.push({ id: 'user-track', coordinates: userCoords, color: COLORS.trackBlue, width: 4 });
+    }
+    return lines;
+  }, [ghost.ghostPoints, gps.points]);
 
-  // User polyline
-  const userPolyline = useMemo(
-    () =>
-      gps.points.map((p) => ({
-        latitude: p.latitude,
-        longitude: p.longitude,
-      })),
-    [gps.points],
-  );
+  // Markers
+  const markers = useMemo<MapMarker[]>(() => {
+    const m: MapMarker[] = [];
+    if (ghost.ghostPosition) {
+      m.push({ id: 'ghost', coordinate: { latitude: ghost.ghostPosition.latitude, longitude: ghost.ghostPosition.longitude }, emoji: '👻', opacity: 0.6 });
+    }
+    if (gps.currentPosition) {
+      m.push({ id: 'user', coordinate: { latitude: gps.currentPosition.latitude, longitude: gps.currentPosition.longitude }, emoji: route?.type === 'bike' ? '🚴' : '🚶' });
+    }
+    return m;
+  }, [ghost.ghostPosition, gps.currentPosition, route?.type]);
 
   const handleStart = useCallback(async () => {
     if (gps.status === 'idle' || gps.status === 'stopped') {
@@ -131,79 +136,20 @@ export default function GhostScreen() {
     );
   }
 
-  const icon = route.type === 'bike' ? '🚴' : '🚶';
   const isRecording = gps.status === 'recording';
 
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
+      <LeafletMap
+        tileUrl={themeColors.tileUrl}
+        center={mapCenter}
+        zoom={15}
+        polylines={polylines}
+        markers={markers}
+        showUserLocation={isRecording}
+        userLocation={gps.currentPosition ? { latitude: gps.currentPosition.latitude, longitude: gps.currentPosition.longitude } : undefined}
         style={styles.map}
-        showsUserLocation
-        showsMyLocationButton={false}
-        initialRegion={{
-          latitude: ghost.ghostPoints[0]?.latitude ?? 48.8566,
-          longitude: ghost.ghostPoints[0]?.longitude ?? 2.3522,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        mapType="none"
-      >
-        {/* OpenStreetMap tiles */}
-        <UrlTile
-          urlTemplate={themeColors.tileUrl}
-          maximumZ={19}
-          flipY={false}
-          tileSize={256}
-        />
-
-        {/* Ghost track (gray dashed) */}
-        {ghostPolyline.length >= 2 && (
-          <Polyline
-            coordinates={ghostPolyline}
-            strokeColor={COLORS.trackGhost}
-            strokeWidth={4}
-            lineDashPattern={[10, 5]}
-          />
-        )}
-
-        {/* User live track (blue) */}
-        {userPolyline.length >= 2 && (
-          <Polyline
-            coordinates={userPolyline}
-            strokeColor={COLORS.trackBlue}
-            strokeWidth={4}
-            lineCap="round"
-            lineJoin="round"
-          />
-        )}
-
-        {/* Ghost cursor */}
-        {ghost.ghostPosition && (
-          <Marker
-            coordinate={ghost.ghostPosition}
-            opacity={0.6}
-          >
-            <View style={styles.ghostMarker}>
-              <Text style={styles.ghostMarkerText}>👻</Text>
-            </View>
-          </Marker>
-        )}
-
-        {/* User cursor */}
-        {gps.currentPosition && (
-          <Marker
-            coordinate={{
-              latitude: gps.currentPosition.latitude,
-              longitude: gps.currentPosition.longitude,
-            }}
-          >
-            <View style={styles.userMarker}>
-              <Text style={styles.userMarkerText}>{icon}</Text>
-            </View>
-          </Marker>
-        )}
-      </MapView>
+      />
 
       {/* Ghost header */}
       <View style={styles.ghostHeader}>
@@ -273,27 +219,6 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: FONT_SIZE.md,
     fontWeight: '700',
-  },
-  ghostMarker: {
-    backgroundColor: 'rgba(156, 163, 175, 0.4)',
-    borderRadius: 20,
-    padding: 4,
-  },
-  ghostMarkerText: {
-    fontSize: 28,
-  },
-  userMarker: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 4,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  userMarkerText: {
-    fontSize: 24,
   },
   buttonContainer: {
     position: 'absolute',

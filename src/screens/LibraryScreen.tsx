@@ -8,11 +8,15 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Share,
+  Platform,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRouteStore } from '../stores/routeStore';
-import { RootStackParamList, RouteType } from '../types';
+import { RootStackParamList, RouteType, SavedRoute } from '../types';
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import RouteCard from '../components/RouteCard';
 
@@ -43,6 +47,46 @@ export default function LibraryScreen() {
         onPress: () => deleteRoute(id),
       },
     ]);
+  };
+
+  const handleShare = async (route: SavedRoute) => {
+    try {
+      const gmr = {
+        version: 1,
+        app: 'GhostMap',
+        exportedAt: new Date().toISOString(),
+        routes: [route],
+      };
+      const safeName = route.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const fileName = `${safeName}.gmr`;
+      const filePath = `${FileSystem.cacheDirectory}${fileName}`;
+      await FileSystem.writeAsStringAsync(filePath, JSON.stringify(gmr), {
+        encoding: 'utf8',
+      });
+
+      // Try native file sharing first (best for .gmr attachment)
+      try {
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(filePath, {
+            mimeType: 'application/octet-stream',
+            dialogTitle: `Partager "${route.name}"`,
+          });
+          return;
+        }
+      } catch (shareErr) {
+        console.warn('expo-sharing failed, falling back to RN Share:', shareErr);
+      }
+
+      // Fallback: use React Native Share API (text-based)
+      await Share.share({
+        title: `GhostMap - ${route.name}`,
+        message: `Voici mon parcours "${route.name}" sur GhostMap !\n\n${JSON.stringify(gmr)}`,
+      });
+    } catch (e: any) {
+      console.error('Share error:', e);
+      Alert.alert('Erreur de partage', e?.message || 'Impossible de partager le parcours.');
+    }
   };
 
   return (
@@ -114,6 +158,7 @@ export default function LibraryScreen() {
             onPress={() => navigation.navigate('Replay', { routeId: item.id })}
             onReplay={() => navigation.navigate('Replay', { routeId: item.id })}
             onGhost={() => navigation.navigate('Ghost', { routeId: item.id })}
+            onShare={() => handleShare(item)}
             onDelete={() => handleDelete(item.id, item.name)}
           />
         )}

@@ -24,6 +24,27 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
   return db;
 }
 
+export async function insertRouteIfNotExists(route: SavedRoute): Promise<boolean> {
+  const database = await getDb();
+  const result = await database.runAsync(
+    `INSERT OR IGNORE INTO routes (id, name, type, date, duration, distance, avgSpeed, maxSpeed, points, thumbnailUri)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      route.id,
+      route.name,
+      route.type,
+      route.date,
+      route.duration,
+      route.distance,
+      route.avgSpeed,
+      route.maxSpeed,
+      JSON.stringify(route.points),
+      route.thumbnailUri ?? null,
+    ],
+  );
+  return result.changes > 0;
+}
+
 export async function insertRoute(route: SavedRoute): Promise<void> {
   const database = await getDb();
   await database.runAsync(

@@ -2,7 +2,8 @@
   "expo": {
     "name": "GhostMap",
     "slug": "ghostmap",
-    "version": "0.9.1.0",
+    "scheme": "ghostmap",
+    "version": "0.9.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -17,7 +18,16 @@
       "bundleIdentifier": "com.ghostmap.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "GhostMap utilise votre position pour enregistrer vos parcours vélo et marche.",
-        "NSLocationAlwaysUsageDescription": "GhostMap utilise votre position en arrière-plan pour le suivi de parcours."
+        "NSLocationAlwaysUsageDescription": "GhostMap utilise votre position en arrière-plan pour le suivi de parcours.",
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "GhostMap Route",
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Owner",
+            "LSItemContentTypes": ["public.json", "public.data"],
+            "CFBundleTypeExtensions": ["gmr"]
+          }
+        ]
       }
     },
     "android": {
@@ -34,6 +44,29 @@
         "FOREGROUND_SERVICE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "file",
+              "host": "*",
+              "pathPattern": ".*\\.gmr"
+            }
+          ]
+        },
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "content",
+              "mimeType": "*/*"
+            }
+          ]
+        }
       ]
     },
     "web": {

@@ -1,20 +1,21 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import MapView, { Polyline, Marker, UrlTile } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGPSStore } from '../stores/gpsStore';
 import { useThemeStore } from '../stores/themeStore';
 import { RootStackParamList } from '../types';
 import StatsOverlay from '../components/StatsOverlay';
+import LeafletMap, { MapPolyline, MapMarker } from '../components/LeafletMap';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function MapScreen() {
   const navigation = useNavigation<NavProp>();
-  const mapRef = useRef<MapView>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const COLORS = useThemeStore((s) => s.colors);
+  const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
 
   const {
     status,
@@ -37,7 +38,12 @@ export default function MapScreen() {
           'Permission requise',
           'GhostMap a besoin de la localisation GPS pour fonctionner.',
         );
+        return;
       }
+      try {
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setMapCenter({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      } catch {}
     })();
   }, []);
 
@@ -53,20 +59,12 @@ export default function MapScreen() {
     };
   }, [status]);
 
-  // Center map on current position
+  // Center map on current position during recording
   useEffect(() => {
-    if (currentPosition && mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: currentPosition.latitude,
-          longitude: currentPosition.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        },
-        500,
-      );
+    if (currentPosition && status === 'recording') {
+      setMapCenter({ latitude: currentPosition.latitude, longitude: currentPosition.longitude });
     }
-  }, [currentPosition]);
+  }, [currentPosition, status]);
 
   const handleStartStop = useCallback(async () => {
     if (status === 'idle' || status === 'stopped') {
@@ -78,90 +76,48 @@ export default function MapScreen() {
   }, [status, startTracking, stopTracking, navigation]);
 
   const centerOnUser = useCallback(async () => {
-    if (mapRef.current) {
-      try {
-        const loc = await import('expo-location').then((m) =>
-          m.getCurrentPositionAsync({ accuracy: m.Accuracy.Balanced }),
-        );
-        mapRef.current.animateToRegion(
-          {
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
-          },
-          500,
-        );
-      } catch {
-        if (currentPosition) {
-          mapRef.current.animateToRegion(
-            {
-              latitude: currentPosition.latitude,
-              longitude: currentPosition.longitude,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
-            },
-            500,
-          );
-        }
+    try {
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setMapCenter({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+    } catch {
+      if (currentPosition) {
+        setMapCenter({ latitude: currentPosition.latitude, longitude: currentPosition.longitude });
       }
     }
   }, [currentPosition]);
 
-  const polylineCoords = points.map((p) => ({
-    latitude: p.latitude,
-    longitude: p.longitude,
-  }));
+  const polylines = useMemo<MapPolyline[]>(() => {
+    if (points.length < 2) return [];
+    return [{
+      id: 'track',
+      coordinates: points.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
+      color: COLORS.trackBlue,
+      width: 4,
+    }];
+  }, [points, COLORS.trackBlue]);
+
+  const markers = useMemo<MapMarker[]>(() => {
+    if (!currentPosition) return [];
+    return [{ id: 'user', coordinate: { latitude: currentPosition.latitude, longitude: currentPosition.longitude }, emoji: '📍' }];
+  }, [currentPosition]);
 
   const currentSpeed = currentPosition?.speed ?? 0;
 
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        showsUserLocation
-        showsMyLocationButton={false}
-        followsUserLocation={status === 'recording'}
-        initialRegion={{
-          latitude: 48.8566,
-          longitude: 2.3522,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        mapType="none"
-      >
-        <UrlTile
-          urlTemplate={COLORS.tileUrl}
-          maximumZ={19}
-          flipY={false}
-          tileSize={256}
-        />
-
-        {polylineCoords.length >= 2 && (
-          <Polyline
-            coordinates={polylineCoords}
-            strokeColor={COLORS.trackBlue}
-            strokeWidth={4}
-            lineCap="round"
-            lineJoin="round"
-          />
-        )}
-
-        {currentPosition && (
-          <Marker
-            coordinate={{
-              latitude: currentPosition.latitude,
-              longitude: currentPosition.longitude,
-            }}
-            title="Position actuelle"
-          />
-        )}
-      </MapView>
+      <LeafletMap
+        tileUrl={COLORS.tileUrl}
+        center={mapCenter}
+        zoom={15}
+        polylines={polylines}
+        markers={markers}
+        showUserLocation
+        userLocation={currentPosition ? { latitude: currentPosition.latitude, longitude: currentPosition.longitude } : undefined}
+      />
 
       {/* Version watermark */}
       <Text style={styles.versionBadge}>
-        GhostMap v0.9.1.0{'\n'}mehiradev corp{'\n'}powered by Claude
+        GhostMap v0.9.2.0{'\n'}mehiradev corp{'\n'}powered by Claude
       </Text>
 
       {/* Compact stats during recording */}
@@ -205,9 +161,6 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  map: {
     flex: 1,
   },
   versionBadge: {

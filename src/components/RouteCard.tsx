@@ -15,6 +15,7 @@ interface Props {
   onPress: () => void;
   onReplay?: () => void;
   onGhost?: () => void;
+  onShare?: () => void;
   onDelete?: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function RouteCard({
   onPress,
   onReplay,
   onGhost,
+  onShare,
   onDelete,
 }: Props) {
   const icon = route.type === 'bike' ? '🚴' : '🚶';
@@ -90,6 +92,14 @@ export default function RouteCard({
               onPress={onGhost}
             >
               <Text style={styles.actionText}>👻 Ghost</Text>
+            </TouchableOpacity>
+          )}
+          {onShare && (
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.shareBtn]}
+              onPress={onShare}
+            >
+              <Text style={styles.actionText}>📤</Text>
             </TouchableOpacity>
           )}
           {onDelete && (
@@ -185,6 +195,9 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.sm,
   },
   ghostBtn: {
+    backgroundColor: COLORS.surfaceLight,
+  },
+  shareBtn: {
     backgroundColor: COLORS.surfaceLight,
   },
   deleteBtn: {
