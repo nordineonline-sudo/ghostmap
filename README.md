@@ -85,6 +85,18 @@ src/
 └── utils/            # Utilitaires (GPS, base de données)
 ```
 
+## Copilot Instructions
+
+Le projet inclut des fichiers d'instructions GitHub Copilot dans `.github/` pour guider l'IA :
+
+| Fichier | Portée | Rôle |
+|---------|--------|------|
+| `copilot-instructions.md` | Tout le projet | Stack technique, règles fondamentales |
+| `instructions/react-native.instructions.md` | `src/screens/`, `components/`, `navigation/` | Composants, hooks, navigation, Expo |
+| `instructions/zustand-stores.instructions.md` | `src/stores/` | Pattern des stores, sélecteurs, mutations |
+| `instructions/typescript-style.instructions.md` | `**/*.ts`, `**/*.tsx` | Typage strict, nommage, imports |
+| `instructions/project-structure.instructions.md` | À la demande | Placement des fichiers, arborescence |
+
 ## Installation
 
 ```bash
