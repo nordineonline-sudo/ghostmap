@@ -12,6 +12,7 @@ interface GhostState {
 
   // ─── Comparison ─────────────────────────
   comparison: GhostComparison;
+  lastMatchedIdx: number; // monotonic advancement index
 
   // ─── Actions ────────────────────────────
   loadGhost: (points: GPSPoint[]) => void;
@@ -26,9 +27,10 @@ export const useGhostStore = create<GhostState>((set, get) => ({
   ghostStartTime: null,
   ghostPosition: null,
   comparison: { deltaSeconds: 0, ghostCaught: false },
+  lastMatchedIdx: 0,
 
   loadGhost: (points: GPSPoint[]) => {
-    set({ ghostPoints: points, ghostPosition: null, ghostStartTime: null });
+    set({ ghostPoints: points, ghostPosition: null, ghostStartTime: null, lastMatchedIdx: 0 });
   },
 
   start: () => {
@@ -45,16 +47,20 @@ export const useGhostStore = create<GhostState>((set, get) => ({
   },
 
   updateComparison: (userPoint: GPSPoint) => {
-    const { ghostPoints, ghostStartTime } = get();
+    const { ghostPoints, ghostStartTime, lastMatchedIdx } = get();
     if (!ghostStartTime || ghostPoints.length < 2) return;
 
     const elapsedMs = Date.now() - ghostStartTime;
     const ghostStart = ghostPoints[0].timestamp;
 
-    // Find closest ghost point to user
+    // Search for closest ghost point starting from lastMatchedIdx (monotonic advancement)
+    // Look ahead up to 50 points from last position to allow some flexibility
+    const searchStart = Math.max(0, lastMatchedIdx - 2);
+    const searchEnd = Math.min(ghostPoints.length, lastMatchedIdx + 50);
+
     let minDist = Infinity;
-    let closestGhostIdx = 0;
-    for (let i = 0; i < ghostPoints.length; i++) {
+    let closestGhostIdx = lastMatchedIdx;
+    for (let i = searchStart; i < searchEnd; i++) {
       const d = haversineDistance(userPoint, ghostPoints[i]);
       if (d < minDist) {
         minDist = d;
@@ -62,15 +68,26 @@ export const useGhostStore = create<GhostState>((set, get) => ({
       }
     }
 
-    // Time it took the ghost to reach this point
-    const ghostTimeToClosest =
-      (ghostPoints[closestGhostIdx].timestamp - ghostStart) / 1000;
+    // Only advance forward (allow small backward steps of 2 for GPS jitter)
+    const newMatchedIdx = Math.max(lastMatchedIdx, closestGhostIdx);
+    set({ lastMatchedIdx: newMatchedIdx });
+
+    // Interpolate time between the two surrounding ghost points for better accuracy
+    let ghostTimeToUser: number;
+    if (newMatchedIdx === 0) {
+      ghostTimeToUser = 0;
+    } else if (newMatchedIdx >= ghostPoints.length - 1) {
+      ghostTimeToUser = (ghostPoints[ghostPoints.length - 1].timestamp - ghostStart) / 1000;
+    } else {
+      // Use the matched point's timestamp
+      ghostTimeToUser = (ghostPoints[newMatchedIdx].timestamp - ghostStart) / 1000;
+    }
 
     // Time elapsed for the user
     const userElapsed = elapsedMs / 1000;
 
     // delta > 0 means user is ahead (faster), delta < 0 means behind
-    const deltaSeconds = ghostTimeToClosest - userElapsed;
+    const deltaSeconds = ghostTimeToUser - userElapsed;
 
     // Check if user has "caught" (passed) the ghost
     const ghostCurrentPos = interpolatePosition(ghostPoints, elapsedMs);
@@ -96,6 +113,7 @@ export const useGhostStore = create<GhostState>((set, get) => ({
       ghostStartTime: null,
       ghostPosition: null,
       comparison: { deltaSeconds: 0, ghostCaught: false },
+      lastMatchedIdx: 0,
     });
   },
 }));

@@ -53,10 +53,14 @@ interface CustomState {
   userIconColor: string;   // hex for dots
   ghostIcon: string;       // 'orange-dot' | emoji
   ghostIconColor: string;
+  keepAwake: boolean;
+  defaultZoom: number;
   setTrackColor: (c: string) => void;
   setGhostTrackColor: (c: string) => void;
   setUserIcon: (icon: string, color: string) => void;
   setGhostIcon: (icon: string, color: string) => void;
+  setKeepAwake: (v: boolean) => void;
+  setDefaultZoom: (z: number) => void;
   loadCustom: () => Promise<void>;
 }
 
@@ -68,6 +72,8 @@ function persist(state: Partial<CustomState>) {
     userIconColor: state.userIconColor,
     ghostIcon: state.ghostIcon,
     ghostIconColor: state.ghostIconColor,
+    keepAwake: state.keepAwake,
+    defaultZoom: state.defaultZoom,
   };
   AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)).catch(() => {});
 }
@@ -79,6 +85,8 @@ export const useCustomStore = create<CustomState>((set, get) => ({
   userIconColor: '#3B82F6',
   ghostIcon: 'orange-dot',
   ghostIconColor: '#F97316',
+  keepAwake: false,
+  defaultZoom: 15,
 
   setTrackColor: (c) => {
     set({ trackColor: c });
@@ -96,6 +104,14 @@ export const useCustomStore = create<CustomState>((set, get) => ({
     set({ ghostIcon: icon, ghostIconColor: color });
     persist(get());
   },
+  setKeepAwake: (v) => {
+    set({ keepAwake: v });
+    persist(get());
+  },
+  setDefaultZoom: (z) => {
+    set({ defaultZoom: z });
+    persist(get());
+  },
   loadCustom: async () => {
     try {
       const json = await AsyncStorage.getItem(STORAGE_KEY);
@@ -108,6 +124,8 @@ export const useCustomStore = create<CustomState>((set, get) => ({
           userIconColor: data.userIconColor ?? '#3B82F6',
           ghostIcon: data.ghostIcon ?? 'orange-dot',
           ghostIconColor: data.ghostIconColor ?? '#F97316',
+          keepAwake: data.keepAwake ?? false,
+          defaultZoom: data.defaultZoom ?? 15,
         });
       }
     } catch {}

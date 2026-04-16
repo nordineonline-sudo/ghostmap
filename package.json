@@ -1,6 +1,6 @@
 {
   "name": "ghostmap",
-  "version": "0.9.4.0",
+  "version": "0.9.5.0",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -17,6 +17,7 @@
     "expo": "~54.0.33",
     "expo-document-picker": "~14.0.8",
     "expo-file-system": "~19.0.21",
+    "expo-keep-awake": "~15.0.8",
     "expo-location": "~19.0.8",
     "expo-sharing": "~14.0.8",
     "expo-sqlite": "~16.0.10",

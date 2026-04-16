@@ -130,12 +130,11 @@ const styles = StyleSheet.create({
     minHeight: 140,
   },
   thumbnail: {
+    flex: 1,
     width: '100%',
-    height: '100%',
   },
   thumbnailPlaceholder: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
     backgroundColor: COLORS.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',

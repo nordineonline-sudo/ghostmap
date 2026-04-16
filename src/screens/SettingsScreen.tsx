@@ -7,6 +7,7 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -293,6 +294,47 @@ export default function SettingsScreen() {
         ))}
       </View>
 
+      {/* Map settings section */}
+      <Text style={[styles.sectionTitle, { color: COLORS.textSecondary }]}>Carte</Text>
+      <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
+        <View style={styles.actionRow}>
+          <Text style={styles.actionIcon}>🔒</Text>
+          <View style={styles.actionText}>
+            <Text style={[styles.actionLabel, { color: COLORS.text }]}>Écran toujours allumé</Text>
+            <Text style={[styles.actionDesc, { color: COLORS.textSecondary }]}>Empêche la mise en veille pendant le tracking</Text>
+          </View>
+          <Switch
+            value={custom.keepAwake}
+            onValueChange={custom.setKeepAwake}
+            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+        <View style={[styles.separator, { backgroundColor: COLORS.border }]} />
+        <View style={styles.actionRow}>
+          <Text style={styles.actionIcon}>🔍</Text>
+          <View style={styles.actionText}>
+            <Text style={[styles.actionLabel, { color: COLORS.text }]}>Zoom par défaut</Text>
+            <Text style={[styles.actionDesc, { color: COLORS.textSecondary }]}>Niveau de zoom initial de la carte</Text>
+          </View>
+          <View style={styles.zoomControl}>
+            <TouchableOpacity
+              style={[styles.zoomBtn, { backgroundColor: COLORS.border }]}
+              onPress={() => custom.setDefaultZoom(Math.max(3, custom.defaultZoom - 1))}
+            >
+              <Text style={[styles.zoomBtnText, { color: COLORS.text }]}>−</Text>
+            </TouchableOpacity>
+            <Text style={[styles.zoomValue, { color: COLORS.text }]}>{custom.defaultZoom}</Text>
+            <TouchableOpacity
+              style={[styles.zoomBtn, { backgroundColor: COLORS.border }]}
+              onPress={() => custom.setDefaultZoom(Math.min(19, custom.defaultZoom + 1))}
+            >
+              <Text style={[styles.zoomBtnText, { color: COLORS.text }]}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
       {/* Export / Import section */}
       <Text style={[styles.sectionTitle, { color: COLORS.textSecondary }]}>Import / Export (.gmr)</Text>
       <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
@@ -369,7 +411,7 @@ export default function SettingsScreen() {
       <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
         <View style={styles.aboutRow}>
           <Text style={[styles.aboutLabel, { color: COLORS.textSecondary }]}>Version</Text>
-          <Text style={[styles.aboutValue, { color: COLORS.text }]}>0.9.3.0</Text>
+          <Text style={[styles.aboutValue, { color: COLORS.text }]}>0.9.5.0</Text>
         </View>
         <View style={[styles.separator, { backgroundColor: COLORS.border }]} />
         <View style={styles.aboutRow}>
@@ -495,5 +537,28 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     marginHorizontal: 5,
+  },
+  zoomControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  zoomBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomBtnText: {
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  zoomValue: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+    minWidth: 24,
+    textAlign: 'center',
   },
 });

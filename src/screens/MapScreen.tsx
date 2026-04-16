@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import * as Location from 'expo-location';
+import { useKeepAwake } from 'expo-keep-awake';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGPSStore } from '../stores/gpsStore';
@@ -18,6 +19,10 @@ export default function MapScreen() {
   const COLORS = useThemeStore((s) => s.colors);
   const custom = useCustomStore();
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
+  const [zoom, setZoom] = useState(custom.defaultZoom);
+
+  // Keep screen awake if enabled
+  useKeepAwake('map', { isEnabled: custom.keepAwake });
 
   const {
     status,
@@ -88,6 +93,14 @@ export default function MapScreen() {
     }
   }, [currentPosition]);
 
+  const handleZoomIn = useCallback(() => {
+    setZoom((z) => Math.min(z + 1, 19));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom((z) => Math.max(z - 1, 3));
+  }, []);
+
   const polylines = useMemo<MapPolyline[]>(() => {
     if (points.length < 2) return [];
     return [{
@@ -115,7 +128,7 @@ export default function MapScreen() {
       <LeafletMap
         tileUrl={COLORS.tileUrl}
         center={mapCenter}
-        zoom={15}
+        zoom={zoom}
         polylines={polylines}
         markers={markers}
         showUserLocation
@@ -125,7 +138,7 @@ export default function MapScreen() {
 
       {/* Version watermark */}
       <Text style={styles.versionBadge}>
-        GhostMap v0.9.2.0{'\n'}mehiradev corp{'\n'}powered by Claude
+        GhostMap v0.9.5.0{'\n'}mehiradev corp{'\n'}powered by Claude
       </Text>
 
       {/* Compact stats during recording */}
@@ -142,6 +155,13 @@ export default function MapScreen() {
 
       {/* Right-side small buttons */}
       <View style={styles.sideButtons}>
+        <TouchableOpacity style={styles.sideBtn} onPress={handleZoomIn} activeOpacity={0.7}>
+          <Text style={styles.sideBtnIcon}>＋</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.sideBtn} onPress={handleZoomOut} activeOpacity={0.7}>
+          <Text style={styles.sideBtnIcon}>﹣</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.sideBtn}
           onPress={centerOnUser}

@@ -47,6 +47,12 @@
 - Choix du thème : Sombre, Clair, Midnight, Forêt
 - Thème persisté entre les sessions
 - Les tuiles de carte s'adaptent au thème choisi
+- **Écran toujours allumé** : empêche la mise en veille pendant le tracking
+- **Zoom par défaut** : réglage du niveau de zoom initial de la carte
+
+### 🔍 Contrôles carte
+- Boutons **Zoom +/−** sur la carte (vue normale et ghost)
+- Zoom par défaut configurable dans les paramètres
 
 ## Stack technique
 
@@ -63,6 +69,7 @@
 | **expo-file-system** | Gestion fichiers (export/import) |
 | **expo-sharing** | Partage natif |
 | **expo-document-picker** | Sélection fichiers (import) |
+| **expo-keep-awake** | Empêcher la mise en veille |
 
 
 ## Architecture
@@ -139,17 +146,29 @@ eas build --profile production --platform android
 
 ## Version
 
-**0.9.3.0**
+**0.9.5.0**
 
 ### Changelog
 
-#### v0.9.3.0
+#### v0.9.5.0
+- Fix : scrolling de la bibliothèque des parcours (RouteCard layout)
+- Fix : formule du retard fantôme (avancement monotone, fenêtre de recherche)
+- Écran toujours allumé (`expo-keep-awake`) avec toggle dans les paramètres
+- Refonte UI du mode Ghost : interface compacte alignée sur la vue normale
+- Boutons Zoom +/− sur les vues carte (MapScreen et GhostScreen)
+- Zoom par défaut configurable dans les paramètres (persisté)
+
+#### v0.9.4.0
 - Personnalisation visuelle : couleur du tracé, couleur ghost, icône utilisateur, icône ghost
 - Nouveau store `customStore` avec persistance AsyncStorage
 - Intégration custom dans MapScreen, GhostScreen, ReplayScreen
 - Ajout `babel.config.js` avec `babel-preset-expo`
 - Suppression de `react-native-reanimated` (inutilisé)
 - Correction erreurs TurboModule dans Expo Go
+
+#### v0.9.3.0
+- Personnalisation visuelle : couleur du tracé, couleur ghost, icône utilisateur, icône ghost
+- Nouveau store `customStore` avec persistance AsyncStorage
 
 #### v0.9.2.0
 - Remplacement de `react-native-maps` par `react-native-webview` + Leaflet.js (fix crash Android)

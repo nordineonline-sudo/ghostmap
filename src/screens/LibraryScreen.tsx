@@ -134,6 +134,7 @@ export default function LibraryScreen() {
       <FlatList
         data={filteredRoutes}
         keyExtractor={(item) => item.id}
+        style={styles.flatList}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
@@ -225,7 +226,11 @@ const styles = StyleSheet.create({
   filterTextActive: {
     color: COLORS.white,
   },
+  flatList: {
+    flex: 1,
+  },
   list: {
+    flexGrow: 0,
     paddingBottom: SPACING.xxl,
   },
   empty: {

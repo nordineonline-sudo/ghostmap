@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useKeepAwake } from 'expo-keep-awake';
 import { useGPSStore } from '../stores/gpsStore';
 import { useGhostStore } from '../stores/ghostStore';
 import { useRouteStore } from '../stores/routeStore';
@@ -26,6 +27,10 @@ export default function GhostScreen() {
   const themeColors = useThemeStore((s) => s.colors);
   const custom = useCustomStore();
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
+  const [zoom, setZoom] = useState(custom.defaultZoom);
+
+  // Keep screen awake if enabled
+  useKeepAwake('ghost', { isEnabled: custom.keepAwake });
 
   // Stores
   const { getRoute, loadRoutes, routes } = useRouteStore();
@@ -130,6 +135,14 @@ export default function GhostScreen() {
     }
   }, [gps.status]);
 
+  const handleZoomIn = useCallback(() => {
+    setZoom((z) => Math.min(z + 1, 19));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom((z) => Math.max(z - 1, 3));
+  }, []);
+
   if (!route) {
     return (
       <View style={styles.loading}>
@@ -145,7 +158,7 @@ export default function GhostScreen() {
       <LeafletMap
         tileUrl={themeColors.tileUrl}
         center={mapCenter}
-        zoom={15}
+        zoom={zoom}
         polylines={polylines}
         markers={markers}
         showUserLocation={isRecording}
@@ -157,7 +170,7 @@ export default function GhostScreen() {
       {/* Ghost header */}
       <View style={styles.ghostHeader}>
         <Text style={styles.ghostHeaderText}>
-          👻 Mode Fantôme — {route.name}
+          👻 {route.name}
         </Text>
       </View>
 
@@ -169,24 +182,38 @@ export default function GhostScreen() {
         />
       )}
 
-      {/* Stats overlay */}
+      {/* Compact stats during recording */}
       {isRecording && (
-        <StatsOverlay
-          distance={gps.distance}
-          speed={gps.currentPosition?.speed ?? 0}
-          elapsed={gps.elapsed}
-        />
+        <View style={styles.statsBar}>
+          <StatsOverlay
+            distance={gps.distance}
+            speed={gps.currentPosition?.speed ?? 0}
+            elapsed={gps.elapsed}
+            compact
+          />
+        </View>
       )}
 
-      {/* Start/Stop button */}
-      <View style={styles.buttonContainer}>
-        <FloatingButton
-          icon={isRecording ? '⏹' : '▶'}
-          label={isRecording ? 'Arrêter' : 'Démarrer le Ghost'}
-          variant={isRecording ? 'danger' : 'success'}
-          size="lg"
+      {/* Right-side small buttons */}
+      <View style={styles.sideButtons}>
+        <TouchableOpacity style={styles.sideBtn} onPress={handleZoomIn} activeOpacity={0.7}>
+          <Text style={styles.sideBtnIcon}>＋</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.sideBtn} onPress={handleZoomOut} activeOpacity={0.7}>
+          <Text style={styles.sideBtnIcon}>﹣</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.sideBtn,
+            { backgroundColor: isRecording ? COLORS.danger : COLORS.primary },
+          ]}
           onPress={handleStart}
-        />
+          activeOpacity={0.7}
+        >
+          <Text style={styles.sideBtnIcon}>
+            {isRecording ? '⏹' : '▶'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -215,17 +242,41 @@ const styles = StyleSheet.create({
     left: SPACING.md,
     backgroundColor: COLORS.overlay,
     borderRadius: BORDER_RADIUS.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
   },
   ghostHeaderText: {
     color: COLORS.text,
-    fontSize: FONT_SIZE.md,
+    fontSize: FONT_SIZE.sm,
     fontWeight: '700',
   },
-  buttonContainer: {
+  statsBar: {
     position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
+    bottom: 16,
+    left: 12,
+    right: 60,
+  },
+  sideButtons: {
+    position: 'absolute',
+    bottom: 16,
+    right: 12,
+    gap: 10,
+  },
+  sideBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  sideBtnIcon: {
+    fontSize: 18,
+    color: '#FFFFFF',
   },
 });

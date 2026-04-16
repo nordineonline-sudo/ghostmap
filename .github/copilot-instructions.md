@@ -9,6 +9,7 @@ GhostMap is a React Native (Expo 54) GPS tracking app for cyclists and walkers w
 - Zustand 5.0 for state management
 - Leaflet.js via react-native-webview for maps
 - expo-sqlite for local persistence
+- expo-keep-awake for screen wake lock
 - React Navigation 7 (Stack + Bottom Tabs)
 
 ## Key Rules
@@ -19,4 +20,5 @@ GhostMap is a React Native (Expo 54) GPS tracking app for cyclists and walkers w
 - Use Zustand stores (one per domain) in `src/stores/`
 - Keep screens in `src/screens/`, reusable UI in `src/components/`
 - Utility functions go in `src/utils/`
+- User settings (keepAwake, defaultZoom, colors, icons) are persisted in `customStore`
 - Respond in the same language as the user's message
