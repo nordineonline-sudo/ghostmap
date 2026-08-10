@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useGPSStore } from '../stores/gpsStore';
 import { useGhostStore } from '../stores/ghostStore';
@@ -26,6 +27,7 @@ export default function GhostScreen() {
   const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const themeColors = useThemeStore((s) => s.colors);
   const custom = useCustomStore();
+  const insets = useSafeAreaInsets();
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
   const [zoom, setZoom] = useState(custom.defaultZoom);
 
@@ -168,7 +170,7 @@ export default function GhostScreen() {
       />
 
       {/* Ghost header */}
-      <View style={styles.ghostHeader}>
+      <View style={[styles.ghostHeader, { top: insets.top + 8 }]}>
         <Text style={styles.ghostHeaderText}>
           👻 {route.name}
         </Text>
@@ -179,12 +181,13 @@ export default function GhostScreen() {
         <GhostIndicator
           deltaSeconds={ghost.comparison.deltaSeconds}
           ghostCaught={ghost.comparison.ghostCaught}
+          topOffset={insets.top + 8}
         />
       )}
 
-      {/* Compact stats during recording */}
+      {/* Compact stats at the top, below the ghost header */}
       {isRecording && (
-        <View style={styles.statsBar}>
+        <View style={[styles.statsBar, { top: insets.top + 56 }]}>
           <StatsOverlay
             distance={gps.distance}
             speed={gps.currentPosition?.speed ?? 0}
@@ -194,8 +197,8 @@ export default function GhostScreen() {
         </View>
       )}
 
-      {/* Right-side small buttons */}
-      <View style={styles.sideButtons}>
+      {/* Top-right command buttons */}
+      <View style={[styles.sideButtons, { top: insets.top + 56 }]}>
         <TouchableOpacity style={styles.sideBtn} onPress={handleZoomIn} activeOpacity={0.7}>
           <Text style={styles.sideBtnIcon}>＋</Text>
         </TouchableOpacity>
@@ -238,7 +241,6 @@ const styles = StyleSheet.create({
   },
   ghostHeader: {
     position: 'absolute',
-    top: 50,
     left: SPACING.md,
     backgroundColor: COLORS.overlay,
     borderRadius: BORDER_RADIUS.md,
@@ -252,13 +254,11 @@ const styles = StyleSheet.create({
   },
   statsBar: {
     position: 'absolute',
-    bottom: 16,
     left: 12,
     right: 60,
   },
   sideButtons: {
     position: 'absolute',
-    bottom: 16,
     right: 12,
     gap: 10,
   },

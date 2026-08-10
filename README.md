@@ -8,7 +8,7 @@
 - Suivi en temps réel de la position, vitesse et altitude
 - Tracé du parcours sur carte (Carto / OpenStreetMap)
 - Statistiques en direct : distance, vitesse, durée
-- Boutons compacts en bas à droite (enregistrer + centrer position)
+- Boutons compacts en haut de la carte (enregistrer + centrer position), à l'écart des barres système Android
 
 ### 📚 Bibliothèque de parcours
 - Sauvegarde locale des parcours (SQLite)
@@ -50,8 +50,12 @@
 - **Écran toujours allumé** : empêche la mise en veille pendant le tracking
 - **Zoom par défaut** : réglage du niveau de zoom initial de la carte
 
+### 🧭 Navigation
+- Menu **sandwich** flottant (☰) remplaçant la barre d'onglets du bas, pour ne pas se confondre avec la barre de gestes/navigation Android
+- Le menu se masque automatiquement après quelques secondes d'inactivité ou dès qu'un écran est sélectionné
+
 ### 🔍 Contrôles carte
-- Boutons **Zoom +/−** sur la carte (vue normale et ghost)
+- Boutons **Zoom +/−**, enregistrement et statistiques temps réel regroupés en haut de la carte (vue normale et ghost)
 - Zoom par défaut configurable dans les paramètres
 
 ## Stack technique
@@ -78,7 +82,7 @@
 src/
 ├── components/       # Composants réutilisables (FloatingButton, StatsOverlay, etc.)
 ├── constants/        # Thème et design tokens
-├── navigation/       # Stack Navigator + Bottom Tabs
+├── navigation/       # Stack Navigator + menu sandwich flottant (remplace les Bottom Tabs)
 ├── screens/          # Écrans de l'application
 │   ├── MapScreen         # Carte principale + démarrage enregistrement
 │   ├── RecordingScreen   # Écran d'enregistrement en cours
@@ -146,9 +150,13 @@ eas build --profile production --platform android
 
 ## Version
 
-**0.9.5.0**
+**0.9.6.0**
 
 ### Changelog
+
+#### v0.9.6.0
+- Menu sandwich (☰) flottant et auto-masquant en remplacement de la barre d'onglets du bas (fix chevauchement avec la barre système Android)
+- Déplacement des boutons enregistrer / zoom +/− et des statistiques temps réel en haut de la carte (MapScreen et GhostScreen)
 
 #### v0.9.5.0
 - Fix : scrolling de la bibliothèque des parcours (RouteCard layout)

@@ -2,10 +2,9 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
 import { RootStackParamList, BottomTabParamList } from '../types';
-import { FONT_SIZE } from '../constants/theme';
 import { useThemeStore } from '../stores/themeStore';
+import HamburgerMenu from '../components/HamburgerMenu';
 
 // Screens
 import MapScreen from '../screens/MapScreen';
@@ -20,58 +19,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 function MainTabs() {
-  const colors = useThemeStore((s) => s.colors);
-
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarLabelStyle: {
-          fontSize: FONT_SIZE.xs,
-          fontWeight: '600',
-        },
-      }}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <HamburgerMenu {...props} />}
     >
-      <Tab.Screen
-        name="Map"
-        component={MapScreen}
-        options={{
-          tabBarLabel: 'Carte',
-          tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: 22 }}>{focused ? '🗺️' : '🗺️'}</Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Library"
-        component={LibraryScreen}
-        options={{
-          tabBarLabel: 'Parcours',
-          tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: 22 }}>{focused ? '📚' : '📚'}</Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          tabBarLabel: 'Paramètres',
-          tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: 22 }}>{focused ? '⚙️' : '⚙️'}</Text>
-          ),
-        }}
-      />
+      <Tab.Screen name="Map" component={MapScreen} />
+      <Tab.Screen name="Library" component={LibraryScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }

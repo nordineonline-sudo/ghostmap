@@ -21,4 +21,5 @@ GhostMap is a React Native (Expo 54) GPS tracking app for cyclists and walkers w
 - Keep screens in `src/screens/`, reusable UI in `src/components/`
 - Utility functions go in `src/utils/`
 - User settings (keepAwake, defaultZoom, colors, icons) are persisted in `customStore`
+- On Android (edge-to-edge enabled), never anchor floating menus/buttons flush to screen edges — use `useSafeAreaInsets` and avoid the bottom system gesture bar. Main tab navigation uses a floating, auto-hiding hamburger menu (`HamburgerMenu`) instead of a bottom tab bar
 - Respond in the same language as the user's message

@@ -5,12 +5,13 @@ import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 interface Props {
   deltaSeconds: number;
   ghostCaught: boolean;
+  topOffset?: number;
 }
 
-export default function GhostIndicator({ deltaSeconds, ghostCaught }: Props) {
+export default function GhostIndicator({ deltaSeconds, ghostCaught, topOffset = 60 }: Props) {
   if (ghostCaught) {
     return (
-      <View style={[styles.container, styles.caught]}>
+      <View style={[styles.container, styles.caught, { top: topOffset }]}>
         <Text style={styles.caughtText}>🏆 Fantôme rattrapé !</Text>
       </View>
     );
@@ -22,7 +23,7 @@ export default function GhostIndicator({ deltaSeconds, ghostCaught }: Props) {
   const color = isAhead ? COLORS.success : COLORS.danger;
 
   return (
-    <View style={[styles.container, { borderColor: color }]}>
+    <View style={[styles.container, { top: topOffset, borderColor: color }]}>
       <Text style={styles.label}>vs Fantôme</Text>
       <Text style={[styles.delta, { color }]}>
         {sign}{seconds}s
@@ -34,7 +35,6 @@ export default function GhostIndicator({ deltaSeconds, ghostCaught }: Props) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 60,
     right: SPACING.md,
     backgroundColor: COLORS.overlay,
     borderRadius: BORDER_RADIUS.md,

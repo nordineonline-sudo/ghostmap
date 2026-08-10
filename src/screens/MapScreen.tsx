@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGPSStore } from '../stores/gpsStore';
 import { useThemeStore } from '../stores/themeStore';
 import { useCustomStore } from '../stores/customStore';
@@ -18,6 +19,7 @@ export default function MapScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const COLORS = useThemeStore((s) => s.colors);
   const custom = useCustomStore();
+  const insets = useSafeAreaInsets();
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
   const [zoom, setZoom] = useState(custom.defaultZoom);
 
@@ -136,14 +138,9 @@ export default function MapScreen() {
         userDotColor={custom.userIconColor || custom.trackColor}
       />
 
-      {/* Version watermark */}
-      <Text style={styles.versionBadge}>
-        GhostMap v0.9.5.0{'\n'}mehiradev corp{'\n'}powered by Claude
-      </Text>
-
-      {/* Compact stats during recording */}
+      {/* Compact stats at the top, next to the hamburger menu */}
       {status === 'recording' && (
-        <View style={styles.statsBar}>
+        <View style={[styles.statsBar, { top: insets.top + 12 }]}>
           <StatsOverlay
             distance={distance}
             speed={currentSpeed}
@@ -153,8 +150,8 @@ export default function MapScreen() {
         </View>
       )}
 
-      {/* Right-side small buttons */}
-      <View style={styles.sideButtons}>
+      {/* Top-right command buttons */}
+      <View style={[styles.sideButtons, { top: insets.top + 12 }]}>
         <TouchableOpacity style={styles.sideBtn} onPress={handleZoomIn} activeOpacity={0.7}>
           <Text style={styles.sideBtnIcon}>＋</Text>
         </TouchableOpacity>
@@ -183,6 +180,11 @@ export default function MapScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Version watermark */}
+      <Text style={styles.versionBadge}>
+        GhostMap v0.9.6.0{'\n'}mehiradev corp{'\n'}powered by Claude
+      </Text>
     </View>
   );
 }
@@ -193,7 +195,7 @@ const styles = StyleSheet.create({
   },
   versionBadge: {
     position: 'absolute',
-    top: 50,
+    bottom: 8,
     right: 8,
     fontSize: 8,
     color: 'rgba(255,255,255,0.3)',
@@ -202,13 +204,11 @@ const styles = StyleSheet.create({
   },
   statsBar: {
     position: 'absolute',
-    bottom: 16,
-    left: 12,
+    left: 70,
     right: 60,
   },
   sideButtons: {
     position: 'absolute',
-    bottom: 16,
     right: 12,
     gap: 10,
   },
