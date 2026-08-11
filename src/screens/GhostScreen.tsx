@@ -4,7 +4,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useKeepAwake } from 'expo-keep-awake';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useGPSStore } from '../stores/gpsStore';
 import { useGhostStore } from '../stores/ghostStore';
 import { useRouteStore } from '../stores/routeStore';
@@ -31,8 +31,17 @@ export default function GhostScreen() {
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
   const [zoom, setZoom] = useState(custom.defaultZoom);
 
-  // Keep screen awake if enabled
-  useKeepAwake('ghost', { isEnabled: custom.keepAwake });
+  useEffect(() => {
+    if (custom.keepAwake) {
+      activateKeepAwakeAsync('ghost').catch(() => {});
+      return () => {
+        deactivateKeepAwake('ghost').catch(() => {});
+      };
+    }
+
+    deactivateKeepAwake('ghost').catch(() => {});
+    return undefined;
+  }, [custom.keepAwake]);
 
   // Stores
   const { getRoute, loadRoutes, routes } = useRouteStore();

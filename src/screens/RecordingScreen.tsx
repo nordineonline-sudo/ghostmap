@@ -14,6 +14,7 @@ import {
   maxSpeed,
 } from '../utils/gps';
 import FloatingButton from '../components/FloatingButton';
+import { buildSavedRouteFromDraft, clearPendingRecordingDraft } from '../utils/recordingDraft';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 

@@ -11,12 +11,15 @@ import { useThemeStore } from './src/stores/themeStore';
 import { useCustomStore } from './src/stores/customStore';
 import { useRouteStore } from './src/stores/routeStore';
 import { SavedRoute } from './src/types';
+import { loadPendingRecordingDraft, clearPendingRecordingDraft, buildSavedRouteFromDraft } from './src/utils/recordingDraft';
 
 export default function App() {
   const loadTheme = useThemeStore((s) => s.loadTheme);
   const themeName = useThemeStore((s) => s.themeName);
   const loadCustom = useCustomStore((s) => s.loadCustom);
+  const routeNamingMethod = useCustomStore((s) => s.routeNamingMethod);
   const loadRoutes = useRouteStore((s) => s.loadRoutes);
+  const addRoute = useRouteStore((s) => s.addRoute);
 
   // Import a .gmr file from a URI
   const handleIncomingFile = useCallback(async (url: string) => {
@@ -66,10 +69,18 @@ export default function App() {
 
   // Initialize database and theme on startup
   useEffect(() => {
-    getDb().catch(console.error);
-    loadTheme();
-    loadCustom();
-  }, []);
+    (async () => {
+      await getDb();
+      await Promise.all([loadTheme(), loadCustom(), loadRoutes()]);
+
+      const pendingDraft = await loadPendingRecordingDraft();
+      if (pendingDraft) {
+        const route = await buildSavedRouteFromDraft(pendingDraft, routeNamingMethod);
+        await addRoute(route);
+        await clearPendingRecordingDraft();
+      }
+    })().catch(console.error);
+  }, [addRoute, loadCustom, loadRoutes, loadTheme, routeNamingMethod]);
 
   // Handle incoming .gmr files (deep link / file open)
   useEffect(() => {

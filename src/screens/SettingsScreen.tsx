@@ -21,6 +21,7 @@ import {
   GHOST_COLORS,
   USER_ICONS,
   GHOST_ICONS,
+  ROUTE_NAMING_LABELS,
 } from '../stores/customStore';
 import { SavedRoute } from '../types';
 
@@ -333,6 +334,35 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
         </View>
+        <View style={[styles.separator, { backgroundColor: COLORS.border }]} />
+        <View style={styles.actionRow}>
+          <Text style={styles.actionIcon}>🏷️</Text>
+          <View style={styles.actionText}>
+            <Text style={[styles.actionLabel, { color: COLORS.text }]}>Nommage des parcours</Text>
+            <Text style={[styles.actionDesc, { color: COLORS.textSecondary }]}>Préférence de nom automatique pour les parcours sauvegardés</Text>
+          </View>
+        </View>
+        <View style={styles.namingRow}>
+          {(Object.keys(ROUTE_NAMING_LABELS) as Array<keyof typeof ROUTE_NAMING_LABELS>).map((method) => (
+            <TouchableOpacity
+              key={method}
+              style={[
+                styles.namingChip,
+                custom.routeNamingMethod === method && styles.namingChipActive,
+              ]}
+              onPress={() => custom.setRouteNamingMethod(method)}
+            >
+              <Text
+                style={[
+                  styles.namingChipText,
+                  custom.routeNamingMethod === method && styles.namingChipTextActive,
+                ]}
+              >
+                {ROUTE_NAMING_LABELS[method]}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Export / Import section */}
@@ -411,7 +441,7 @@ export default function SettingsScreen() {
       <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
         <View style={styles.aboutRow}>
           <Text style={[styles.aboutLabel, { color: COLORS.textSecondary }]}>Version</Text>
-          <Text style={[styles.aboutValue, { color: COLORS.text }]}>0.9.5.0</Text>
+          <Text style={[styles.aboutValue, { color: COLORS.text }]}>0.9.7.0</Text>
         </View>
         <View style={[styles.separator, { backgroundColor: COLORS.border }]} />
         <View style={styles.aboutRow}>
@@ -560,5 +590,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     minWidth: 24,
     textAlign: 'center',
+  },
+  namingRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingBottom: SPACING.md,
+  },
+  namingChip: {
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+  },
+  namingChipActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: 'rgba(59, 130, 246, 0.14)',
+  },
+  namingChipText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+    color: '#94A3B8',
+  },
+  namingChipTextActive: {
+    color: '#3B82F6',
   },
 });

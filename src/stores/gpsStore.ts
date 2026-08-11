@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import * as Location from 'expo-location';
-import { GPSPoint, RecordingStatus } from '../types';
+import type { GPSPoint, RecordingDraft, RecordingStatus, RouteType } from '../types';
 import { totalDistance } from '../utils/gps';
+import { clearPendingRecordingDraft, loadPendingRecordingDraft, savePendingRecordingDraft } from '../utils/recordingDraft';
+import { resolveStartingCity } from '../utils/routeNaming';
 
 interface GPSState {
   // ─── Status ──────────────────────────────
@@ -14,6 +16,9 @@ interface GPSState {
   distance: number; // meters
   startTime: number | null; // Unix ms
   elapsed: number; // seconds
+  startCity: string | null;
+  pendingDraftId: string | null;
+  routeType: RouteType;
 
   // ─── Actions ─────────────────────────────
   requestPermissions: () => Promise<boolean>;
@@ -21,6 +26,9 @@ interface GPSState {
   stopTracking: () => void;
   reset: () => void;
   tick: () => void; // update elapsed time each second
+  persistDraft: () => Promise<void>;
+  loadPendingDraft: () => Promise<boolean>;
+  setRouteType: (type: RouteType) => void;
 }
 
 export const useGPSStore = create<GPSState>((set, get) => ({
@@ -31,6 +39,9 @@ export const useGPSStore = create<GPSState>((set, get) => ({
   distance: 0,
   startTime: null,
   elapsed: 0,
+  startCity: null,
+  pendingDraftId: null,
+  routeType: 'bike',
 
   requestPermissions: async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -54,6 +65,8 @@ export const useGPSStore = create<GPSState>((set, get) => ({
       altitude: loc.coords.altitude,
     };
 
+    const startCity = await resolveStartingCity(initialPoint);
+
     set({
       status: 'recording',
       points: [initialPoint],
@@ -61,7 +74,11 @@ export const useGPSStore = create<GPSState>((set, get) => ({
       distance: 0,
       startTime: Date.now(),
       elapsed: 0,
+      startCity,
+      pendingDraftId: `route_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
     });
+
+    await get().persistDraft();
 
     const sub = await Location.watchPositionAsync(
       {
@@ -85,6 +102,7 @@ export const useGPSStore = create<GPSState>((set, get) => ({
           points: updatedPoints,
           distance: totalDistance(updatedPoints),
         });
+        get().persistDraft().catch(() => {});
       },
     );
 
@@ -108,7 +126,11 @@ export const useGPSStore = create<GPSState>((set, get) => ({
       distance: 0,
       startTime: null,
       elapsed: 0,
+      startCity: null,
+      pendingDraftId: null,
+      routeType: 'bike',
     });
+    clearPendingRecordingDraft().catch(() => {});
   },
 
   tick: () => {
@@ -116,5 +138,49 @@ export const useGPSStore = create<GPSState>((set, get) => ({
     if (status === 'recording' && startTime) {
       set({ elapsed: (Date.now() - startTime) / 1000 });
     }
+  },
+  persistDraft: async () => {
+    const { pendingDraftId, points, startTime, startCity, routeType, status } = get();
+    if (status !== 'recording' || !pendingDraftId || !startTime || points.length === 0) {
+      return;
+    }
+
+    const draft: RecordingDraft = {
+      id: pendingDraftId,
+      startedAt: new Date(startTime).toISOString(),
+      startCity,
+      routeType,
+      points,
+    };
+
+    await savePendingRecordingDraft(draft);
+  },
+  loadPendingDraft: async () => {
+    const draft = await loadPendingRecordingDraft();
+    if (!draft) {
+      return false;
+    }
+
+    const points = [...draft.points];
+    const distance = totalDistance(points);
+    const currentPosition = points[points.length - 1] ?? null;
+
+    set({
+      status: 'stopped',
+      locationSubscription: null,
+      currentPosition,
+      points,
+      distance,
+      startTime: new Date(draft.startedAt).getTime(),
+      elapsed: (Date.now() - new Date(draft.startedAt).getTime()) / 1000,
+      startCity: draft.startCity,
+      pendingDraftId: draft.id,
+      routeType: draft.routeType,
+    });
+
+    return true;
+  },
+  setRouteType: (type) => {
+    set({ routeType: type });
   },
 }));

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import * as Location from 'expo-location';
-import { useKeepAwake } from 'expo-keep-awake';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,8 +23,17 @@ export default function MapScreen() {
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
   const [zoom, setZoom] = useState(custom.defaultZoom);
 
-  // Keep screen awake if enabled
-  useKeepAwake('map', { isEnabled: custom.keepAwake });
+  useEffect(() => {
+    if (custom.keepAwake) {
+      activateKeepAwakeAsync('map').catch(() => {});
+      return () => {
+        deactivateKeepAwake('map').catch(() => {});
+      };
+    }
+
+    deactivateKeepAwake('map').catch(() => {});
+    return undefined;
+  }, [custom.keepAwake]);
 
   const {
     status,
@@ -183,7 +192,7 @@ export default function MapScreen() {
 
       {/* Version watermark */}
       <Text style={styles.versionBadge}>
-        GhostMap v0.9.6.1{'\n'}mehiradev corp{'\n'}powered by Claude
+        GhostMap v0.9.7.0{'\n'}mehiradev corp{'\n'}powered by Claude
       </Text>
     </View>
   );

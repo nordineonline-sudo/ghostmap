@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { SavedRoute } from '../types';
-import { getAllRoutes, insertRoute, deleteRoute as dbDelete } from '../utils/database';
+import { getAllRoutes, insertRouteIfNotExists, deleteRoute as dbDelete } from '../utils/database';
 
 interface RouteState {
   routes: SavedRoute[];
@@ -23,8 +23,10 @@ export const useRouteStore = create<RouteState>((set, get) => ({
   },
 
   addRoute: async (route: SavedRoute) => {
-    await insertRoute(route);
-    set((s) => ({ routes: [route, ...s.routes] }));
+    const inserted = await insertRouteIfNotExists(route);
+    if (inserted) {
+      set((s) => ({ routes: [route, ...s.routes] }));
+    }
   },
 
   deleteRoute: async (id: string) => {

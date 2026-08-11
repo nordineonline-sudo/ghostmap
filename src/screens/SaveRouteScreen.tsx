@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGPSStore } from '../stores/gpsStore';
 import { useRouteStore } from '../stores/routeStore';
+import { useCustomStore } from '../stores/customStore';
 import { RootStackParamList, RouteType, SavedRoute } from '../types';
 import {
   totalDistance,
@@ -26,17 +27,18 @@ import {
 } from '../utils/gps';
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import FloatingButton from '../components/FloatingButton';
+import { formatRouteName } from '../utils/routeNaming';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SaveRouteScreen() {
   const navigation = useNavigation<NavProp>();
-  const { points, distance, elapsed, reset: resetGPS } = useGPSStore();
+  const { points, distance, elapsed, startCity, reset: resetGPS } = useGPSStore();
   const { addRoute } = useRouteStore();
+  const routeNamingMethod = useCustomStore((s) => s.routeNamingMethod);
 
-  // Auto-fill name: "Parcours 07/04/2026 14:30"
   const now = new Date();
-  const defaultName = `Parcours ${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+  const defaultName = formatRouteName(startCity, routeNamingMethod, now);
 
   const [name, setName] = useState(defaultName);
   const [type, setType] = useState<RouteType>('bike');
@@ -57,7 +59,7 @@ export default function SaveRouteScreen() {
     try {
       const route: SavedRoute = {
         id: `route_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-        name: name.trim(),
+        name: name.trim() || defaultName,
         type,
         date: new Date().toISOString(),
         duration: dur,

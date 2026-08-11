@@ -150,9 +150,14 @@ eas build --profile production --platform android
 
 ## Version
 
-**0.9.6.1**
+**0.9.7.0**
 
 ### Changelog
+
+#### v0.9.7.0
+- Auto-sauvegarde du parcours en cours dans la bibliothèque si l'application se ferme avant l'enregistrement manuel
+- Nommage automatique des parcours à partir de la ville de départ avec préférence configurable dans les paramètres
+- Mise à jour de la version application et de l'affichage interne
 
 #### v0.9.6.1
 - Incrément de version application et mise à jour de l'affichage de version dans l'interface

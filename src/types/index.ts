@@ -9,6 +9,7 @@ export interface GPSPoint {
 
 // ─── Saved Route ──────────────────────────────────────────
 export type RouteType = 'bike' | 'walk';
+export type RouteNamingMethod = 'cityDate' | 'city' | 'date';
 
 export interface SavedRoute {
   id: string;
@@ -21,6 +22,14 @@ export interface SavedRoute {
   maxSpeed: number; // m/s
   points: GPSPoint[];
   thumbnailUri?: string;
+}
+
+export interface RecordingDraft {
+  id: string;
+  startedAt: string;
+  startCity: string | null;
+  routeType: RouteType;
+  points: GPSPoint[];
 }
 
 // ─── Recording State ─────────────────────────────────────

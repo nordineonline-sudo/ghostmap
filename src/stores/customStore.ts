@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { RouteNamingMethod } from '../types';
 
 const STORAGE_KEY = '@ghostmap_custom';
 
@@ -45,6 +46,12 @@ export const GHOST_ICONS = [
   { label: '🏴 Drapeau', value: '🏴', color: '' },
 ];
 
+export const ROUTE_NAMING_LABELS: Record<RouteNamingMethod, string> = {
+  cityDate: 'Ville + date',
+  city: 'Ville uniquement',
+  date: 'Date uniquement',
+};
+
 // ─── Store ────────────────────────────────────────────────
 interface CustomState {
   trackColor: string;
@@ -55,12 +62,14 @@ interface CustomState {
   ghostIconColor: string;
   keepAwake: boolean;
   defaultZoom: number;
+  routeNamingMethod: RouteNamingMethod;
   setTrackColor: (c: string) => void;
   setGhostTrackColor: (c: string) => void;
   setUserIcon: (icon: string, color: string) => void;
   setGhostIcon: (icon: string, color: string) => void;
   setKeepAwake: (v: boolean) => void;
   setDefaultZoom: (z: number) => void;
+  setRouteNamingMethod: (method: RouteNamingMethod) => void;
   loadCustom: () => Promise<void>;
 }
 
@@ -74,6 +83,7 @@ function persist(state: Partial<CustomState>) {
     ghostIconColor: state.ghostIconColor,
     keepAwake: state.keepAwake,
     defaultZoom: state.defaultZoom,
+    routeNamingMethod: state.routeNamingMethod,
   };
   AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)).catch(() => {});
 }
@@ -87,6 +97,7 @@ export const useCustomStore = create<CustomState>((set, get) => ({
   ghostIconColor: '#F97316',
   keepAwake: false,
   defaultZoom: 15,
+  routeNamingMethod: 'cityDate',
 
   setTrackColor: (c) => {
     set({ trackColor: c });
@@ -112,6 +123,10 @@ export const useCustomStore = create<CustomState>((set, get) => ({
     set({ defaultZoom: z });
     persist(get());
   },
+  setRouteNamingMethod: (method) => {
+    set({ routeNamingMethod: method });
+    persist(get());
+  },
   loadCustom: async () => {
     try {
       const json = await AsyncStorage.getItem(STORAGE_KEY);
@@ -126,6 +141,7 @@ export const useCustomStore = create<CustomState>((set, get) => ({
           ghostIconColor: data.ghostIconColor ?? '#F97316',
           keepAwake: data.keepAwake ?? false,
           defaultZoom: data.defaultZoom ?? 15,
+          routeNamingMethod: data.routeNamingMethod ?? 'cityDate',
         });
       }
     } catch {}
