@@ -183,7 +183,7 @@ export default function MapScreen() {
 
       {/* Version watermark */}
       <Text style={styles.versionBadge}>
-        GhostMap v0.9.6.0{'\n'}mehiradev corp{'\n'}powered by Claude
+        GhostMap v0.9.6.1{'\n'}mehiradev corp{'\n'}powered by Claude
       </Text>
     </View>
   );

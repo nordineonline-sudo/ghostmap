@@ -150,9 +150,12 @@ eas build --profile production --platform android
 
 ## Version
 
-**0.9.6.0**
+**0.9.6.1**
 
 ### Changelog
+
+#### v0.9.6.1
+- Incrément de version application et mise à jour de l'affichage de version dans l'interface
 
 #### v0.9.6.0
 - Menu sandwich (☰) flottant et auto-masquant en remplacement de la barre d'onglets du bas (fix chevauchement avec la barre système Android)
