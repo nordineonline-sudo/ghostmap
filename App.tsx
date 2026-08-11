@@ -7,6 +7,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { getDb } from './src/utils/database';
 import { insertRouteIfNotExists } from './src/utils/database';
+import { loadRecoverySnapshot, clearRecoverySnapshot } from './src/utils/recoverySession';
+import { averageSpeed, maxSpeed as calcMaxSpeed, elapsedTime, totalDistance, getCityFromCoords } from './src/utils/gps';
 import { useThemeStore } from './src/stores/themeStore';
 import { useCustomStore } from './src/stores/customStore';
 import { useRouteStore } from './src/stores/routeStore';
@@ -17,6 +19,54 @@ export default function App() {
   const themeName = useThemeStore((s) => s.themeName);
   const loadCustom = useCustomStore((s) => s.loadCustom);
   const loadRoutes = useRouteStore((s) => s.loadRoutes);
+
+  // Initialize database and theme on startup
+  useEffect(() => {
+    const init = async () => {
+      await getDb();
+      loadTheme();
+      loadCustom();
+
+      // ── Crash / battery-out recovery ─────────────────────────────────────
+      // If a recording snapshot from a previous interrupted session exists,
+      // convert it into a saved route (idempotent via INSERT OR IGNORE).
+      const snapshot = await loadRecoverySnapshot();
+      if (snapshot && snapshot.points.length >= 2) {
+        const pts = snapshot.points;
+        const dur = elapsedTime(pts);
+        const dist = totalDistance(pts);
+        const avg = averageSpeed(pts);
+        const max = calcMaxSpeed(pts);
+
+        const firstPoint = pts[0];
+        const city = await getCityFromCoords(firstPoint.latitude, firstPoint.longitude).catch(() => null);
+        const date = new Date(snapshot.startTime);
+        const dateStr = date.toLocaleDateString('fr-FR');
+        const routeName = city
+          ? `${city} ${dateStr} (récupéré)`
+          : `Parcours ${dateStr} (récupéré)`;
+
+        const route: SavedRoute = {
+          id: snapshot.id,
+          name: routeName,
+          type: snapshot.type,
+          date: new Date(snapshot.startTime).toISOString(),
+          duration: dur,
+          distance: dist,
+          avgSpeed: avg,
+          maxSpeed: max,
+          points: pts,
+        };
+
+        await insertRouteIfNotExists(route);
+      }
+      await clearRecoverySnapshot();
+      // ─────────────────────────────────────────────────────────────────────
+
+      await loadRoutes();
+    };
+    init().catch(console.error);
+  }, []);
 
   // Import a .gmr file from a URI
   const handleIncomingFile = useCallback(async (url: string) => {
@@ -66,9 +116,14 @@ export default function App() {
 
   // Initialize database and theme on startup
   useEffect(() => {
-    getDb().catch(console.error);
-    loadTheme();
-    loadCustom();
+    const init = async () => {
+      await getDb();
+      loadTheme();
+      loadCustom();
+      await recoverUnfinishedSession();
+      await loadRoutes();
+    };
+    init().catch(console.error);
   }, []);
 
   // Handle incoming .gmr files (deep link / file open)

@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import * as Location from 'expo-location';
-import { GPSPoint, RecordingStatus } from '../types';
+import { v4 as uuidv4 } from 'uuid';
+import { GPSPoint, RecordingStatus, RouteType } from '../types';
 import { totalDistance } from '../utils/gps';
+import {
+  saveRecoverySnapshot,
+  clearRecoverySnapshot,
+  SNAPSHOT_INTERVAL_POINTS,
+} from '../utils/recoverySession';
 
 interface GPSState {
   // ─── Status ──────────────────────────────
@@ -15,11 +21,18 @@ interface GPSState {
   startTime: number | null; // Unix ms
   elapsed: number; // seconds
 
+  // ─── Recovery ────────────────────────────
+  /** Stable ID assigned at session start for deduplication on recovery. */
+  sessionId: string | null;
+  /** Activity type selected by the user; defaults to 'bike'. */
+  routeType: RouteType;
+
   // ─── Actions ─────────────────────────────
   requestPermissions: () => Promise<boolean>;
   startTracking: (intervalMs?: number) => Promise<void>;
   stopTracking: () => void;
   reset: () => void;
+  setRouteType: (type: RouteType) => void;
   tick: () => void; // update elapsed time each second
 }
 
@@ -31,6 +44,8 @@ export const useGPSStore = create<GPSState>((set, get) => ({
   distance: 0,
   startTime: null,
   elapsed: 0,
+  sessionId: null,
+  routeType: 'bike',
 
   requestPermissions: async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -54,14 +69,28 @@ export const useGPSStore = create<GPSState>((set, get) => ({
       altitude: loc.coords.altitude,
     };
 
+    const sessionId = uuidv4();
+    const startTime = Date.now();
+
     set({
       status: 'recording',
       points: [initialPoint],
       currentPosition: initialPoint,
       distance: 0,
-      startTime: Date.now(),
+      startTime,
       elapsed: 0,
+      sessionId,
     });
+
+    // Write initial snapshot
+    saveRecoverySnapshot({
+      id: sessionId,
+      points: [initialPoint],
+      type: get().routeType,
+      startTime,
+      distance: 0,
+      autoRecovered: true,
+    }).catch(console.error);
 
     const sub = await Location.watchPositionAsync(
       {
@@ -78,13 +107,26 @@ export const useGPSStore = create<GPSState>((set, get) => ({
           altitude: location.coords.altitude,
         };
 
-        const { points } = get();
+        const { points, sessionId: sid, startTime: st, routeType } = get();
         const updatedPoints = [...points, point];
+        const updatedDistance = totalDistance(updatedPoints);
         set({
           currentPosition: point,
           points: updatedPoints,
-          distance: totalDistance(updatedPoints),
+          distance: updatedDistance,
         });
+
+        // Persist snapshot every SNAPSHOT_INTERVAL_POINTS new points
+        if (updatedPoints.length % SNAPSHOT_INTERVAL_POINTS === 0 && sid && st) {
+          saveRecoverySnapshot({
+            id: sid,
+            points: updatedPoints,
+            type: routeType,
+            startTime: st,
+            distance: updatedDistance,
+            autoRecovered: true,
+          }).catch(console.error);
+        }
       },
     );
 
@@ -94,12 +136,16 @@ export const useGPSStore = create<GPSState>((set, get) => ({
   stopTracking: () => {
     const { locationSubscription } = get();
     locationSubscription?.remove();
+    // Clear the recovery snapshot – user is now on SaveRoute screen and will
+    // explicitly save or discard the session.
+    clearRecoverySnapshot().catch(console.error);
     set({ status: 'stopped', locationSubscription: null });
   },
 
   reset: () => {
     const { locationSubscription } = get();
     locationSubscription?.remove();
+    clearRecoverySnapshot().catch(console.error);
     set({
       status: 'idle',
       locationSubscription: null,
@@ -108,7 +154,13 @@ export const useGPSStore = create<GPSState>((set, get) => ({
       distance: 0,
       startTime: null,
       elapsed: 0,
+      sessionId: null,
+      routeType: 'bike',
     });
+  },
+
+  setRouteType: (type: RouteType) => {
+    set({ routeType: type });
   },
 
   tick: () => {

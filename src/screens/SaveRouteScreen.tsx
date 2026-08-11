@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {
   formatDistance,
   formatDuration,
   formatSpeed,
+  getCityFromCoords,
 } from '../utils/gps';
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import FloatingButton from '../components/FloatingButton';
@@ -41,6 +42,26 @@ export default function SaveRouteScreen() {
   const [name, setName] = useState(defaultName);
   const [type, setType] = useState<RouteType>('bike');
   const [saving, setSaving] = useState(false);
+
+  // Async-populate name from start city via reverse geocoding.
+  // Only runs once on mount (points are frozen after recording stops).
+  const firstLat = points[0]?.latitude;
+  const firstLng = points[0]?.longitude;
+  useEffect(() => {
+    if (firstLat == null || firstLng == null) return;
+    let cancelled = false;
+    getCityFromCoords(firstLat, firstLng)
+      .then((city) => {
+        if (cancelled) return;
+        if (city) {
+          const date = new Date();
+          const dateStr = date.toLocaleDateString('fr-FR');
+          setName(`${city} ${dateStr}`);
+        }
+      })
+      .catch(() => { /* keep default name */ });
+    return () => { cancelled = true; };
+  }, [firstLat, firstLng]);
 
   const dist = totalDistance(points);
   const avg = averageSpeed(points);

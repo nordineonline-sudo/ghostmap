@@ -1,4 +1,5 @@
 import { GPSPoint } from '../types';
+import * as Location from 'expo-location';
 
 const EARTH_RADIUS = 6371000; // meters
 
@@ -130,4 +131,25 @@ export function computeGhostDelta(
 
   // Positive = user ahead, negative = user behind
   return (ghostTimeAtClosest - userElapsed) / 1000;
+}
+
+
+// ─── Reverse Geocoding ────────────────────────────────────────────────────────
+
+/**
+ * Attempts to resolve the city/locality name from GPS coordinates.
+ * Returns the city string, or null if unavailable (no permission, network, etc.).
+ */
+export async function getCityFromCoords(
+  latitude: number,
+  longitude: number,
+): Promise<string | null> {
+  try {
+    const results = await Location.reverseGeocodeAsync({ latitude, longitude });
+    if (!results || results.length === 0) return null;
+    const place = results[0];
+    return place.city ?? place.subregion ?? place.region ?? null;
+  } catch {
+    return null;
+  }
 }
