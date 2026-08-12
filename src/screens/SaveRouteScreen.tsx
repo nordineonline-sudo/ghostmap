@@ -15,7 +15,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGPSStore } from '../stores/gpsStore';
 import { useRouteStore } from '../stores/routeStore';
 import { useCustomStore } from '../stores/customStore';
-import { RootStackParamList, RouteType, SavedRoute } from '../types';
+import { useThemeStore } from '../stores/themeStore';
+import type { RootStackParamList, RouteType, SavedRoute } from '../types';
 import {
   totalDistance,
   averageSpeed,
@@ -25,7 +26,7 @@ import {
   formatDuration,
   formatSpeed,
 } from '../utils/gps';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import FloatingButton from '../components/FloatingButton';
 import { formatRouteName } from '../utils/routeNaming';
 
@@ -33,7 +34,8 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SaveRouteScreen() {
   const navigation = useNavigation<NavProp>();
-  const { points, distance, elapsed, startCity, reset: resetGPS } = useGPSStore();
+  const colors = useThemeStore((s) => s.colors);
+  const { points, startCity, reset: resetGPS } = useGPSStore();
   const { addRoute } = useRouteStore();
   const routeNamingMethod = useCustomStore((s) => s.routeNamingMethod);
 
@@ -97,54 +99,69 @@ export default function SaveRouteScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
-        <Text style={styles.title}>💾 Sauvegarder le parcours</Text>
+        <View style={[styles.headerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+          <Text style={[styles.title, { color: colors.text }]}>Sauvegarder le parcours</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Vérifiez les chiffres, nommez la sortie, puis ajoutez-la à votre bibliothèque.</Text>
+        </View>
 
         {/* Stats summary */}
-        <View style={styles.statsContainer}>
-          <StatItem label="Distance" value={`${formatDistance(dist)} km`} icon="📏" />
-          <StatItem label="Durée" value={formatDuration(dur)} icon="⏱️" />
-          <StatItem label="Vitesse moy." value={`${formatSpeed(avg)} km/h`} icon="⚡" />
-          <StatItem label="Vitesse max" value={`${formatSpeed(max)} km/h`} icon="🚀" />
-          <StatItem label="Points GPS" value={`${points.length}`} icon="📍" />
+        <View style={[styles.statsContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+          <StatItem label="Distance" value={`${formatDistance(dist)} km`} accent={colors.primary} colors={colors} />
+          <StatItem label="Durée" value={formatDuration(dur)} accent={colors.accent} colors={colors} />
+          <StatItem label="Vitesse moy." value={`${formatSpeed(avg)} km/h`} accent={colors.success} colors={colors} />
+          <StatItem label="Vitesse max" value={`${formatSpeed(max)} km/h`} accent={colors.warning} colors={colors} />
+          <StatItem label="Points GPS" value={`${points.length}`} accent={colors.primaryDark} colors={colors} />
         </View>
 
         {/* Name input */}
-        <Text style={styles.label}>Nom du parcours</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Nom du parcours</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
           value={name}
           onChangeText={setName}
           placeholder="Ex : Tour du lac, Trajet bureau..."
-          placeholderTextColor={COLORS.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           autoFocus
         />
 
         {/* Type selector */}
-        <Text style={styles.label}>Type d'activité</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Type d'activité</Text>
         <View style={styles.typeRow}>
           <TouchableOpacity
-            style={[styles.typeBtn, type === 'bike' && styles.typeBtnActive]}
+            style={[
+              styles.typeBtn,
+              {
+                backgroundColor: colors.surface,
+                borderColor: type === 'bike' ? colors.primary : colors.border,
+              },
+            ]}
             onPress={() => setType('bike')}
           >
-            <Text style={styles.typeIcon}>🚴</Text>
+            <View style={[styles.typePill, { backgroundColor: colors.bike }]} />
             <Text
-              style={[styles.typeLabel, type === 'bike' && styles.typeLabelActive]}
+              style={[styles.typeLabel, { color: type === 'bike' ? colors.primaryDark : colors.textSecondary }]}
             >
               Vélo
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.typeBtn, type === 'walk' && styles.typeBtnActive]}
+            style={[
+              styles.typeBtn,
+              {
+                backgroundColor: colors.surface,
+                borderColor: type === 'walk' ? colors.primary : colors.border,
+              },
+            ]}
             onPress={() => setType('walk')}
           >
-            <Text style={styles.typeIcon}>🚶</Text>
+            <View style={[styles.typePill, { backgroundColor: colors.walk }]} />
             <Text
-              style={[styles.typeLabel, type === 'walk' && styles.typeLabelActive]}
+              style={[styles.typeLabel, { color: type === 'walk' ? colors.primaryDark : colors.textSecondary }]}
             >
               Marche
             </Text>
@@ -154,7 +171,7 @@ export default function SaveRouteScreen() {
         {/* Actions */}
         <View style={styles.actions}>
           <FloatingButton
-            icon="💾"
+            icon="✓"
             label="Sauvegarder"
             onPress={handleSave}
             variant="primary"
@@ -163,7 +180,7 @@ export default function SaveRouteScreen() {
             style={styles.saveBtn}
           />
           <FloatingButton
-            icon="🗑️"
+            icon="✕"
             label="Supprimer"
             onPress={handleDiscard}
             variant="danger"
@@ -179,18 +196,20 @@ export default function SaveRouteScreen() {
 function StatItem({
   label,
   value,
-  icon,
+  accent,
+  colors,
 }: {
   label: string;
   value: string;
-  icon: string;
+  accent: string;
+  colors: ReturnType<typeof useThemeStore.getState>['colors'];
 }) {
   return (
     <View style={styles.statItem}>
-      <Text style={styles.statIcon}>{icon}</Text>
+      <View style={[styles.statAccent, { backgroundColor: accent }]} />
       <View>
-        <Text style={styles.statLabel}>{label}</Text>
-        <Text style={styles.statValue}>{value}</Text>
+        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+        <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
       </View>
     </View>
   );
@@ -199,57 +218,58 @@ function StatItem({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   content: {
     padding: SPACING.lg,
-    paddingTop: SPACING.xxl,
+    paddingTop: SPACING.xl,
+  },
+  headerCard: {
+    borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
   },
   title: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.xl,
     fontWeight: '800',
-    marginBottom: SPACING.lg,
-    textAlign: 'center',
+  },
+  subtitle: {
+    marginTop: SPACING.xs,
+    fontSize: FONT_SIZE.sm,
+    lineHeight: 20,
   },
   statsContainer: {
-    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
     gap: SPACING.sm,
+    borderWidth: 1,
   },
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
   },
-  statIcon: {
-    fontSize: 20,
-    width: 30,
-    textAlign: 'center',
+  statAccent: {
+    width: 10,
+    height: 36,
+    borderRadius: BORDER_RADIUS.full,
   },
   statLabel: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.sm,
   },
   statValue: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.lg,
     fontWeight: '700',
   },
   label: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.md,
     fontWeight: '600',
     marginBottom: SPACING.sm,
   },
   input: {
-    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    color: COLORS.text,
     fontSize: FONT_SIZE.lg,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
@@ -265,26 +285,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 2,
-    borderColor: COLORS.border,
     paddingVertical: SPACING.md,
   },
-  typeBtnActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-  },
-  typeIcon: {
-    fontSize: 24,
+  typePill: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   typeLabel: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.lg,
     fontWeight: '600',
-  },
-  typeLabelActive: {
-    color: COLORS.primary,
   },
   actions: {
     gap: SPACING.md,

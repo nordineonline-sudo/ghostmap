@@ -6,7 +6,8 @@ import {
   ViewStyle,
   ActivityIndicator,
 } from 'react-native';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
 
 interface Props {
   label: string;
@@ -29,12 +30,16 @@ export default function FloatingButton({
   disabled,
   style,
 }: Props) {
+  const colors = useThemeStore((s) => s.colors);
+
   const bgColor = {
-    primary: COLORS.primary,
-    danger: COLORS.danger,
-    ghost: COLORS.surfaceLight,
-    success: COLORS.success,
+    primary: colors.primary,
+    danger: colors.danger,
+    ghost: colors.surfaceLight,
+    success: colors.success,
   }[variant];
+
+  const textColor = variant === 'ghost' ? colors.text : colors.white;
 
   const sizeStyle = {
     sm: { paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md },
@@ -62,9 +67,9 @@ export default function FloatingButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={COLORS.white} size="small" />
+        <ActivityIndicator color={textColor} size="small" />
       ) : (
-        <Text style={[styles.label, { fontSize }]}>
+        <Text style={[styles.label, { color: textColor, fontSize }]}>
           {icon ? `${icon} ` : ''}
           {label}
         </Text>
@@ -78,17 +83,16 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.black,
+    shadowColor: '#17324D',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 6,
   },
   label: {
-    color: COLORS.white,
     fontWeight: '700',
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
 });

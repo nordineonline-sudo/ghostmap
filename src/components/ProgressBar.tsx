@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { COLORS, SPACING, FONT_SIZE } from '../constants/theme';
+import { SPACING, FONT_SIZE } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
 import { formatDuration } from '../utils/gps';
 
 interface Props {
@@ -11,15 +12,17 @@ interface Props {
 }
 
 export default function ProgressBar({ progress, elapsed, total, onSeek }: Props) {
+  const colors = useThemeStore((s) => s.colors);
+
   return (
     <View style={styles.container}>
       <View style={styles.timeRow}>
-        <Text style={styles.time}>{formatDuration(elapsed)}</Text>
-        <Text style={styles.time}>{formatDuration(total)}</Text>
+        <Text style={[styles.time, { color: colors.textSecondary }]}>{formatDuration(elapsed)}</Text>
+        <Text style={[styles.time, { color: colors.textSecondary }]}>{formatDuration(total)}</Text>
       </View>
       <View style={styles.barContainer}>
-        <View style={styles.barBackground}>
-          <View style={[styles.barFill, { width: `${progress * 100}%` }]} />
+        <View style={[styles.barBackground, { backgroundColor: colors.surfaceLight }]}>
+          <View style={[styles.barFill, { width: `${progress * 100}%`, backgroundColor: colors.primary }]} />
         </View>
       </View>
     </View>
@@ -37,7 +40,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   time: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.sm,
     fontVariant: ['tabular-nums'],
   },
@@ -48,12 +50,10 @@ const styles = StyleSheet.create({
   },
   barBackground: {
     flex: 1,
-    backgroundColor: COLORS.surfaceLight,
     borderRadius: 3,
   },
   barFill: {
     height: '100%',
-    backgroundColor: COLORS.primary,
     borderRadius: 3,
   },
 });

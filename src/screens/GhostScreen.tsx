@@ -8,8 +8,8 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useGPSStore } from '../stores/gpsStore';
 import { useGhostStore } from '../stores/ghostStore';
 import { useRouteStore } from '../stores/routeStore';
-import { RootStackParamList } from '../types';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import type { RootStackParamList } from '../types';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import { useThemeStore } from '../stores/themeStore';
 import { useCustomStore } from '../stores/customStore';
 import FloatingButton from '../components/FloatingButton';
@@ -180,8 +180,8 @@ export default function GhostScreen() {
 
       {/* Ghost header */}
       <View style={[styles.ghostHeader, { top: insets.top + 8 }]}>
-        <Text style={styles.ghostHeaderText}>
-          👻 {route.name}
+        <Text style={[styles.ghostHeaderText, { color: themeColors.text }]}>
+          Ghost: {route.name}
         </Text>
       </View>
 
@@ -208,24 +208,44 @@ export default function GhostScreen() {
 
       {/* Top-right command buttons */}
       <View style={[styles.sideButtons, { top: insets.top + 56 }]}>
-        <TouchableOpacity style={styles.sideBtn} onPress={handleZoomIn} activeOpacity={0.7}>
-          <Text style={styles.sideBtnIcon}>＋</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.sideBtn} onPress={handleZoomOut} activeOpacity={0.7}>
-          <Text style={styles.sideBtnIcon}>﹣</Text>
-        </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.sideBtn,
-            { backgroundColor: isRecording ? COLORS.danger : COLORS.primary },
-          ]}
-          onPress={handleStart}
+          style={[styles.sideBtn, { backgroundColor: themeColors.overlay, borderColor: themeColors.border }]}
+          onPress={handleZoomIn}
           activeOpacity={0.7}
         >
-          <Text style={styles.sideBtnIcon}>
-            {isRecording ? '⏹' : '▶'}
-          </Text>
+          <Text style={[styles.sideBtnIcon, { color: themeColors.text }]}>＋</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sideBtn, { backgroundColor: themeColors.overlay, borderColor: themeColors.border }]}
+          onPress={handleZoomOut}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.sideBtnIcon, { color: themeColors.text }]}>﹣</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View
+        style={[
+          styles.bottomPanel,
+          {
+            backgroundColor: themeColors.overlay,
+            borderColor: themeColors.border,
+            bottom: insets.bottom + SPACING.lg,
+          },
+        ]}
+      >
+        <View>
+          <Text style={[styles.bottomPanelTitle, { color: themeColors.text }]}>Course contre le ghost</Text>
+          <Text style={[styles.bottomPanelText, { color: themeColors.textSecondary }]}>Comparez votre rythme en direct et gardez la route sous les yeux.</Text>
+        </View>
+        <FloatingButton
+          icon={isRecording ? '⏹' : '▶'}
+          label={isRecording ? 'Arrêter' : 'Lancer'}
+          variant={isRecording ? 'danger' : 'primary'}
+          size="md"
+          onPress={handleStart}
+          style={styles.actionButton}
+        />
       </View>
     </View>
   );
@@ -240,24 +260,20 @@ const styles = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.lg,
   },
   ghostHeader: {
     position: 'absolute',
     left: SPACING.md,
-    backgroundColor: COLORS.overlay,
     borderRadius: BORDER_RADIUS.md,
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
   },
   ghostHeaderText: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.sm,
     fontWeight: '700',
   },
@@ -275,17 +291,45 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    borderWidth: 1,
+    shadowColor: '#17324D',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
   },
   sideBtnIcon: {
     fontSize: 18,
-    color: '#FFFFFF',
+  },
+  bottomPanel: {
+    position: 'absolute',
+    left: SPACING.md,
+    right: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    padding: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    shadowColor: '#17324D',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  bottomPanelTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '800',
+  },
+  bottomPanelText: {
+    marginTop: 2,
+    fontSize: FONT_SIZE.sm,
+    maxWidth: 220,
+  },
+  actionButton: {
+    marginLeft: 'auto',
+    minWidth: 126,
   },
 });

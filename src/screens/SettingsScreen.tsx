@@ -176,7 +176,10 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: COLORS.background }]} contentContainerStyle={styles.content}>
       {/* Header */}
-      <Text style={[styles.title, { color: COLORS.text }]}>Paramètres</Text>
+      <View style={[styles.heroCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}> 
+        <Text style={[styles.title, { color: COLORS.text }]}>Paramètres</Text>
+        <Text style={[styles.heroText, { color: COLORS.textSecondary }]}>Ajustez le style, la carte et vos préférences sans alourdir l’interface.</Text>
+      </View>
 
       {/* Theme section */}
       <Text style={[styles.sectionTitle, { color: COLORS.textSecondary }]}>Thème</Text>
@@ -355,6 +358,7 @@ export default function SettingsScreen() {
               <Text
                 style={[
                   styles.namingChipText,
+                  { color: custom.routeNamingMethod === method ? COLORS.primaryDark : COLORS.textSecondary },
                   custom.routeNamingMethod === method && styles.namingChipTextActive,
                 ]}
               >
@@ -441,7 +445,7 @@ export default function SettingsScreen() {
       <View style={[styles.card, { backgroundColor: COLORS.surface }]}>
         <View style={styles.aboutRow}>
           <Text style={[styles.aboutLabel, { color: COLORS.textSecondary }]}>Version</Text>
-          <Text style={[styles.aboutValue, { color: COLORS.text }]}>0.9.7.0</Text>
+          <Text style={[styles.aboutValue, { color: COLORS.text }]}>1.0.0.0</Text>
         </View>
         <View style={[styles.separator, { backgroundColor: COLORS.border }]} />
         <View style={styles.aboutRow}>
@@ -474,7 +478,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZE.xl,
     fontWeight: '700',
+  },
+  heroCard: {
+    borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    padding: SPACING.lg,
     marginBottom: SPACING.lg,
+  },
+  heroText: {
+    fontSize: FONT_SIZE.sm,
+    lineHeight: 20,
+    marginTop: SPACING.xs,
   },
   sectionTitle: {
     fontSize: FONT_SIZE.sm,
@@ -602,20 +616,19 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
     borderColor: 'transparent',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.5)',
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.md,
   },
   namingChipActive: {
-    borderColor: '#3B82F6',
-    backgroundColor: 'rgba(59, 130, 246, 0.14)',
+    borderColor: '#35C8FF',
+    backgroundColor: 'rgba(53, 200, 255, 0.14)',
   },
   namingChipText: {
     fontSize: FONT_SIZE.sm,
     fontWeight: '600',
-    color: '#94A3B8',
   },
   namingChipTextActive: {
-    color: '#3B82F6',
+    color: '#149ED2',
   },
 });

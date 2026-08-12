@@ -46,7 +46,7 @@ function buildHtml(tileUrl: string) {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
 <style>
   *{margin:0;padding:0;}
-  html,body,#map{width:100%;height:100%;background:#0F172A;}
+  html,body,#map{width:100%;height:100%;background:#DFF7FF;}
   .emoji-marker{font-size:24px;line-height:1;text-align:center;}
   .user-dot{width:14px;height:14px;background:#3B82F6;border:3px solid #fff;border-radius:50%;box-shadow:0 0 8px rgba(59,130,246,0.6);}
 </style>

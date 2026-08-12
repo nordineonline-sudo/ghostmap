@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
 
 interface Props {
   deltaSeconds: number;
@@ -9,10 +10,12 @@ interface Props {
 }
 
 export default function GhostIndicator({ deltaSeconds, ghostCaught, topOffset = 60 }: Props) {
+  const colors = useThemeStore((s) => s.colors);
+
   if (ghostCaught) {
     return (
-      <View style={[styles.container, styles.caught, { top: topOffset }]}>
-        <Text style={styles.caughtText}>🏆 Fantôme rattrapé !</Text>
+      <View style={[styles.container, styles.caught, { top: topOffset, borderColor: colors.success, backgroundColor: `${colors.success}1A` }]}> 
+        <Text style={[styles.caughtText, { color: colors.success }]}>Fantôme rattrapé</Text>
       </View>
     );
   }
@@ -20,11 +23,11 @@ export default function GhostIndicator({ deltaSeconds, ghostCaught, topOffset = 
   const isAhead = deltaSeconds > 0;
   const sign = isAhead ? '+' : '';
   const seconds = Math.round(deltaSeconds);
-  const color = isAhead ? COLORS.success : COLORS.danger;
+  const color = isAhead ? colors.success : colors.danger;
 
   return (
-    <View style={[styles.container, { top: topOffset, borderColor: color }]}>
-      <Text style={styles.label}>vs Fantôme</Text>
+    <View style={[styles.container, { top: topOffset, borderColor: color, backgroundColor: colors.overlay }]}> 
+      <Text style={[styles.label, { color: colors.textSecondary }]}>vs Fantôme</Text>
       <Text style={[styles.delta, { color }]}>
         {sign}{seconds}s
       </Text>
@@ -36,26 +39,19 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     right: SPACING.md,
-    backgroundColor: COLORS.overlay,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 2,
-    borderColor: COLORS.ghost,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     alignItems: 'center',
     minWidth: 100,
   },
-  caught: {
-    borderColor: COLORS.success,
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
-  },
+  caught: {},
   caughtText: {
-    color: COLORS.success,
     fontSize: FONT_SIZE.md,
     fontWeight: '700',
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.xs,
     textTransform: 'uppercase',
     letterSpacing: 1,

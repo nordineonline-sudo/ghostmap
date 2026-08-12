@@ -1,78 +1,93 @@
 const sharp = require('sharp');
 
-// Clean vector-style ghost riding a bicycle — simple, minimal, transparent bg
-function createSVG(size) {
+const palette = {
+  sky: '#35C8FF',
+  skyLight: '#B9F0FF',
+  cream: '#F7FCFF',
+  navy: '#17324D',
+  teal: '#118AB2',
+  coral: '#FF8A5B',
+  route: '#6BE18A',
+  shadow: '#1282A2',
+};
+
+function createBadgeSVG({ size, withBackground, transparentBackground, compact = false }) {
+  const background = transparentBackground
+    ? ''
+    : `<rect x="0" y="0" width="512" height="512" rx="${withBackground ? 118 : 0}" fill="url(#bg)"/>`;
+
+  const halo = withBackground
+    ? `<circle cx="368" cy="134" r="86" fill="${palette.skyLight}" opacity="0.42"/>`
+    : '<circle cx="372" cy="138" r="82" fill="#D8F7FF" opacity="0.55"/>';
+
+  const lift = compact ? 18 : 0;
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512">
-  <!-- Back wheel -->
-  <circle cx="145" cy="370" r="75" fill="none" stroke="#94A3B8" stroke-width="12"/>
-  <circle cx="145" cy="370" r="8" fill="#94A3B8"/>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="40" x2="446" y2="468" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="${palette.sky}"/>
+      <stop offset="1" stop-color="${palette.teal}"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="${palette.shadow}" flood-opacity="0.22"/>
+    </filter>
+  </defs>
 
-  <!-- Front wheel -->
-  <circle cx="375" cy="370" r="75" fill="none" stroke="#94A3B8" stroke-width="12"/>
-  <circle cx="375" cy="370" r="8" fill="#94A3B8"/>
+  ${background}
+  ${halo}
+  <g transform="translate(0 ${lift})" filter="url(#shadow)">
+    <path d="M256 92c75.7 0 137 61.3 137 137 0 83.7-82.8 145.7-122.7 175.4-8.8 6.6-19.8 6.6-28.6 0C201.8 374.7 119 312.7 119 229c0-75.7 61.3-137 137-137Z" fill="${palette.cream}"/>
+    <path d="M191 275c34 10.7 95.9 10.7 130 0" fill="none" stroke="${palette.route}" stroke-width="20" stroke-linecap="round"/>
+    <path d="M180 213c0-49.7 34.8-86 76-86s76 36.3 76 86v54.5c0 3.4-1.5 6.6-4.1 8.8-9.9 8.4-18.6 3.3-26.3-1.2-7.9-4.6-14.7-8.6-21.6 0-6.8 8.5-13.3 3.9-20.1-.9-7.3-5.1-15.6 9.5-24.4 8.6-5.8-.6-9.8-3.9-13.7-7.1-6.4-5.3-12.4-10.2-23.7 1.5-5.6 5.8-18.1 2.2-18.1-9.7V213Z" fill="${palette.cream}"/>
+    <circle cx="225" cy="211" r="18" fill="${palette.navy}"/>
+    <circle cx="287" cy="211" r="18" fill="${palette.navy}"/>
+    <circle cx="219" cy="204" r="5" fill="white"/>
+    <circle cx="281" cy="204" r="5" fill="white"/>
+    <path d="M226 250c11.3 12.6 48.7 12.6 60 0" fill="none" stroke="${palette.navy}" stroke-width="12" stroke-linecap="round"/>
+    <path d="M165 311c22.8-16.3 42.4-24.4 58.8-24.4 13.9 0 26.7 5.2 38.6 15.6 16.3 14.2 29.4 21.3 39.1 21.3 15.8 0 32.6-11.8 50.5-35.3" fill="none" stroke="${palette.coral}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="351" cy="286" r="22" fill="${palette.coral}"/>
+  </g>
+  </svg>`;
+}
 
-  <!-- Bike frame -->
-  <line x1="145" y1="370" x2="260" y2="280" stroke="#64748B" stroke-width="10" stroke-linecap="round"/>
-  <line x1="260" y1="280" x2="375" y2="370" stroke="#64748B" stroke-width="10" stroke-linecap="round"/>
-  <line x1="260" y1="280" x2="260" y2="340" stroke="#64748B" stroke-width="10" stroke-linecap="round"/>
-  <line x1="145" y1="370" x2="260" y2="340" stroke="#64748B" stroke-width="10" stroke-linecap="round"/>
-
-  <!-- Seat -->
-  <line x1="245" y1="272" x2="278" y2="272" stroke="#475569" stroke-width="12" stroke-linecap="round"/>
-
-  <!-- Handlebar -->
-  <line x1="350" y1="260" x2="390" y2="280" stroke="#475569" stroke-width="10" stroke-linecap="round"/>
-  <line x1="375" y1="370" x2="370" y2="270" stroke="#64748B" stroke-width="8" stroke-linecap="round"/>
-
-  <!-- Ghost body -->
-  <path d="M200 260 C200 160, 320 160, 320 260 L320 300 
-           C310 285, 300 300, 290 285 
-           C280 300, 270 285, 260 300 
-           C250 285, 240 300, 230 285 
-           C220 300, 210 285, 200 300 Z" 
-        fill="#E0E7FF" opacity="0.92"/>
-
-  <!-- Ghost eyes -->
-  <ellipse cx="240" cy="215" rx="15" ry="18" fill="white"/>
-  <ellipse cx="283" cy="215" rx="15" ry="18" fill="white"/>
-  <circle cx="244" cy="218" r="8" fill="#3B82F6"/>
-  <circle cx="287" cy="218" r="8" fill="#3B82F6"/>
-
-  <!-- Ghost eye shine -->
-  <circle cx="241" cy="213" r="3" fill="white"/>
-  <circle cx="284" cy="213" r="3" fill="white"/>
-
-  <!-- Small smile -->
-  <path d="M250 242 Q262 255, 274 242" fill="none" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
-
-  <!-- Ghost arms holding handlebar -->
-  <path d="M310 250 Q330 245, 355 262" fill="none" stroke="#E0E7FF" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
-  <path d="M205 255 Q185 270, 195 290" fill="none" stroke="#E0E7FF" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
-
-  <!-- Speed lines -->
-  <line x1="50" y1="220" x2="120" y2="220" stroke="#3B82F6" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
-  <line x1="30" y1="250" x2="110" y2="250" stroke="#3B82F6" stroke-width="3" stroke-linecap="round" opacity="0.35"/>
-  <line x1="55" y1="280" x2="105" y2="280" stroke="#3B82F6" stroke-width="3" stroke-linecap="round" opacity="0.25"/>
-</svg>`;
+async function writePng(svg, outputPath, width, height) {
+  await sharp(Buffer.from(svg)).resize(width, height).png().toFile(outputPath);
+  console.log(`✓ ${outputPath} (${width}x${height})`);
 }
 
 async function generate() {
-  const svg = createSVG(1024);
-  const svgBuffer = Buffer.from(svg);
+  await writePng(
+    createBadgeSVG({ size: 1024, withBackground: true, transparentBackground: false }),
+    'assets/icon.png',
+    1024,
+    1024,
+  );
 
-  await sharp(svgBuffer).resize(1024, 1024).png().toFile('assets/icon.png');
-  console.log('✓ icon.png (1024x1024)');
+  await writePng(
+    createBadgeSVG({ size: 1024, withBackground: false, transparentBackground: true }),
+    'assets/adaptive-icon.png',
+    1024,
+    1024,
+  );
 
-  await sharp(svgBuffer).resize(1024, 1024).png().toFile('assets/adaptive-icon.png');
-  console.log('✓ adaptive-icon.png (1024x1024)');
+  await writePng(
+    createBadgeSVG({ size: 48, withBackground: true, transparentBackground: false, compact: true }),
+    'assets/favicon.png',
+    48,
+    48,
+  );
 
-  await sharp(svgBuffer).resize(48, 48).png().toFile('assets/favicon.png');
-  console.log('✓ favicon.png (48x48)');
-
-  await sharp(svgBuffer).resize(512, 512).png().toFile('assets/splash-icon.png');
-  console.log('✓ splash-icon.png (512x512)');
+  await writePng(
+    createBadgeSVG({ size: 512, withBackground: false, transparentBackground: true, compact: true }),
+    'assets/splash-icon.png',
+    512,
+    512,
+  );
 
   console.log('\nDone!');
 }
 
-generate().catch(console.error);
+generate().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

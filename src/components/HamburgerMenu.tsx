@@ -6,9 +6,9 @@ import { useThemeStore } from '../stores/themeStore';
 import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 
 const MENU_ICONS: Record<string, string> = {
-  Map: '🗺️',
-  Library: '📚',
-  Settings: '⚙️',
+  Map: '◉',
+  Library: '▦',
+  Settings: '⚙',
 };
 
 const MENU_LABELS: Record<string, string> = {
@@ -72,11 +72,11 @@ export default function HamburgerMenu({ state, navigation }: BottomTabBarProps) 
               return (
                 <TouchableOpacity
                   key={route.key}
-                  style={[styles.menuItem, focused && { backgroundColor: `${colors.primary}22` }]}
+                  style={[styles.menuItem, focused && { backgroundColor: `${colors.primary}18` }]}
                   onPress={() => handleSelect(route.name)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.menuIcon}>{MENU_ICONS[route.name] ?? '•'}</Text>
+                  <Text style={[styles.menuIcon, { color: focused ? colors.primaryDark : colors.textSecondary }]}>{MENU_ICONS[route.name] ?? '•'}</Text>
                   <Text style={[styles.menuLabel, { color: focused ? colors.primary : colors.text }]}>
                     {MENU_LABELS[route.name] ?? route.name}
                   </Text>
@@ -105,32 +105,32 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   fab: {
-    width: 46,
-    height: 46,
+    width: 54,
+    height: 54,
     borderRadius: BORDER_RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 6,
+    shadowColor: '#17324D',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    elevation: 8,
   },
   fabIcon: {
     fontSize: 20,
   },
   menu: {
     marginTop: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
-    paddingVertical: SPACING.xs,
-    minWidth: 170,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    paddingVertical: SPACING.sm,
+    minWidth: 196,
+    shadowColor: '#17324D',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
+    elevation: 10,
   },
   menuItem: {
     flexDirection: 'row',
@@ -141,6 +141,8 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     fontSize: 18,
+    width: 20,
+    textAlign: 'center',
   },
   menuLabel: {
     fontSize: FONT_SIZE.sm,

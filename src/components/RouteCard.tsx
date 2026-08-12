@@ -6,9 +6,10 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import { SavedRoute } from '../types';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import type { SavedRoute } from '../types';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import { formatDistance, formatDuration, msToKmh } from '../utils/gps';
+import { useThemeStore } from '../stores/themeStore';
 
 interface Props {
   route: SavedRoute;
@@ -27,7 +28,8 @@ export default function RouteCard({
   onShare,
   onDelete,
 }: Props) {
-  const icon = route.type === 'bike' ? '🚴' : '🚶';
+  const colors = useThemeStore((s) => s.colors);
+  const icon = route.type === 'bike' ? 'Velo' : 'Walk';
   const typeLabel = route.type === 'bike' ? 'Vélo' : 'Marche';
   const dateStr = new Date(route.date).toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -39,7 +41,7 @@ export default function RouteCard({
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -51,8 +53,10 @@ export default function RouteCard({
             style={styles.thumbnail}
           />
         ) : (
-          <View style={styles.thumbnailPlaceholder}>
-            <Text style={styles.thumbnailIcon}>{icon}</Text>
+          <View style={[styles.thumbnailPlaceholder, { backgroundColor: colors.surfaceLight }] }>
+            <View style={[styles.thumbnailBadge, { backgroundColor: route.type === 'bike' ? colors.bike : colors.walk }]}>
+              <Text style={styles.thumbnailBadgeText}>{icon}</Text>
+            </View>
           </View>
         )}
       </View>
@@ -60,54 +64,54 @@ export default function RouteCard({
       {/* Info */}
       <View style={styles.info}>
         <View style={styles.header}>
-          <Text style={styles.name} numberOfLines={1}>
-            {icon} {route.name}
+          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
+            {route.name}
           </Text>
-          <Text style={styles.type}>{typeLabel}</Text>
+          <Text style={[styles.type, { color: colors.primaryDark, backgroundColor: colors.surfaceLight }]}>{typeLabel}</Text>
         </View>
-        <Text style={styles.date}>{dateStr}</Text>
+        <Text style={[styles.date, { color: colors.textSecondary }]}>{dateStr}</Text>
 
         <View style={styles.statsRow}>
-          <Text style={styles.stat}>
-            📏 {formatDistance(route.distance)} km
+          <Text style={[styles.stat, { color: colors.textSecondary }]}>
+            {formatDistance(route.distance)} km
           </Text>
-          <Text style={styles.stat}>
-            ⏱️ {formatDuration(route.duration)}
+          <Text style={[styles.stat, { color: colors.textSecondary }]}>
+            {formatDuration(route.duration)}
           </Text>
-          <Text style={styles.stat}>
-            ⚡ {msToKmh(route.avgSpeed).toFixed(1)} km/h
+          <Text style={[styles.stat, { color: colors.textSecondary }]}>
+            {msToKmh(route.avgSpeed).toFixed(1)} km/h
           </Text>
         </View>
 
         {/* Action buttons */}
         <View style={styles.actions}>
           {onReplay && (
-            <TouchableOpacity style={styles.actionBtn} onPress={onReplay}>
-              <Text style={styles.actionText}>▶️ Replay</Text>
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary }]} onPress={onReplay}>
+              <Text style={[styles.actionText, { color: colors.white }]}>Lecture</Text>
             </TouchableOpacity>
           )}
           {onGhost && (
             <TouchableOpacity
-              style={[styles.actionBtn, styles.ghostBtn]}
+              style={[styles.actionBtn, styles.ghostBtn, { backgroundColor: colors.surfaceLight }]}
               onPress={onGhost}
             >
-              <Text style={styles.actionText}>👻 Ghost</Text>
+              <Text style={[styles.actionText, { color: colors.text }]}>Ghost</Text>
             </TouchableOpacity>
           )}
           {onShare && (
             <TouchableOpacity
-              style={[styles.actionBtn, styles.shareBtn]}
+              style={[styles.actionBtn, styles.shareBtn, { backgroundColor: colors.surfaceLight }]}
               onPress={onShare}
             >
-              <Text style={styles.actionText}>📤</Text>
+              <Text style={[styles.actionText, { color: colors.text }]}>Partager</Text>
             </TouchableOpacity>
           )}
           {onDelete && (
             <TouchableOpacity
-              style={[styles.actionBtn, styles.deleteBtn]}
+              style={[styles.actionBtn, styles.deleteBtn, { backgroundColor: colors.danger }]}
               onPress={onDelete}
             >
-              <Text style={styles.actionText}>🗑️</Text>
+              <Text style={[styles.actionText, { color: colors.white }]}>Suppr.</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -119,11 +123,11 @@ export default function RouteCard({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
     marginHorizontal: SPACING.md,
     marginBottom: SPACING.md,
+    borderWidth: 1,
   },
   thumbnailContainer: {
     width: 100,
@@ -135,12 +139,18 @@ const styles = StyleSheet.create({
   },
   thumbnailPlaceholder: {
     flex: 1,
-    backgroundColor: COLORS.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbnailIcon: {
-    fontSize: 36,
+  thumbnailBadge: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  thumbnailBadgeText: {
+    color: '#FFFFFF',
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '800',
   },
   info: {
     flex: 1,
@@ -152,16 +162,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   name: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.lg,
     fontWeight: '700',
     flex: 1,
   },
   type: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.xs,
     textTransform: 'uppercase',
-    backgroundColor: COLORS.surfaceLight,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.sm,
@@ -169,7 +176,6 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   date: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.sm,
     marginTop: SPACING.xs,
   },
@@ -179,8 +185,8 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   stat: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
   },
   actions: {
     flexDirection: 'row',
@@ -188,23 +194,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   actionBtn: {
-    backgroundColor: COLORS.primary,
     paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.full,
   },
-  ghostBtn: {
-    backgroundColor: COLORS.surfaceLight,
-  },
-  shareBtn: {
-    backgroundColor: COLORS.surfaceLight,
-  },
+  ghostBtn: {},
+  shareBtn: {},
   deleteBtn: {
-    backgroundColor: COLORS.danger,
     marginLeft: 'auto',
   },
   actionText: {
-    color: COLORS.white,
     fontSize: FONT_SIZE.sm,
     fontWeight: '600',
   },

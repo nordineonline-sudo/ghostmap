@@ -3,15 +3,15 @@
     "name": "GhostMap",
     "slug": "ghostmap",
     "scheme": "ghostmap",
-    "version": "0.9.7.0",
+    "version": "1.0.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0F172A"
+      "backgroundColor": "#D8F7FF"
     },
     "ios": {
       "supportsTablet": true,
@@ -33,7 +33,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0F172A"
+        "backgroundColor": "#35C8FF"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.ghostmap.app",

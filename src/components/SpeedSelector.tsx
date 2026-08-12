@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { PlaybackSpeed } from '../types';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import type { PlaybackSpeed } from '../types';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
 
 interface Props {
   currentSpeed: PlaybackSpeed;
@@ -11,9 +12,11 @@ interface Props {
 const SPEEDS: PlaybackSpeed[] = [1, 2, 5, 10];
 
 export default function SpeedSelector({ currentSpeed, onSpeedChange }: Props) {
+  const colors = useThemeStore((s) => s.colors);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Vitesse</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Vitesse</Text>
       <View style={styles.row}>
         {SPEEDS.map((speed) => (
           <TouchableOpacity
@@ -21,13 +24,13 @@ export default function SpeedSelector({ currentSpeed, onSpeedChange }: Props) {
             onPress={() => onSpeedChange(speed)}
             style={[
               styles.button,
-              speed === currentSpeed && styles.activeButton,
+              { backgroundColor: speed === currentSpeed ? colors.primary : colors.surfaceLight },
             ]}
           >
             <Text
               style={[
                 styles.buttonText,
-                speed === currentSpeed && styles.activeText,
+                { color: speed === currentSpeed ? colors.white : colors.textSecondary },
               ]}
             >
               ×{speed}
@@ -45,7 +48,6 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.xs,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -59,19 +61,11 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.sm,
-    backgroundColor: COLORS.surfaceLight,
     minWidth: 50,
     alignItems: 'center',
   },
-  activeButton: {
-    backgroundColor: COLORS.primary,
-  },
   buttonText: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.md,
     fontWeight: '600',
-  },
-  activeText: {
-    color: COLORS.white,
   },
 });

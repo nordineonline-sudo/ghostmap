@@ -5,11 +5,11 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRouteStore } from '../stores/routeStore';
 import { useReplayStore } from '../stores/replayStore';
-import { RootStackParamList, PlaybackSpeed } from '../types';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import { useThemeStore } from '../stores/themeStore';
+import type { RootStackParamList, PlaybackSpeed } from '../types';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import { useCustomStore } from '../stores/customStore';
-import { formatDistance, formatSpeed, formatDuration, msToKmh } from '../utils/gps';
+import { formatDistance, formatSpeed, msToKmh } from '../utils/gps';
 import FloatingButton from '../components/FloatingButton';
 import SpeedSelector from '../components/SpeedSelector';
 import ProgressBar from '../components/ProgressBar';
@@ -21,7 +21,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ReplayScreen() {
   const { params } = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavProp>();
-  const themeColors = useThemeStore((s) => s.colors);
+  const colors = useThemeStore((s) => s.colors);
   const custom = useCustomStore();
   const { getRoute, loadRoutes, routes } = useRouteStore();
   const {
@@ -125,13 +125,13 @@ export default function ReplayScreen() {
     );
   }
 
-  const icon = route.type === 'bike' ? '🚴' : '🚶';
+  const typeLabel = route.type === 'bike' ? 'Vélo' : 'Marche';
 
   return (
     <View style={styles.container}>
       {/* Map */}
       <LeafletMap
-        tileUrl={themeColors.tileUrl}
+        tileUrl={colors.tileUrl}
         fitBounds={fitBounds}
         polylines={polylines}
         markers={markers}
@@ -139,29 +139,30 @@ export default function ReplayScreen() {
       />
 
       {/* Bottom controls overlay */}
-      <View style={styles.controls}>
+      <View style={[styles.controls, { backgroundColor: colors.overlay, borderColor: colors.border }]}> 
         {/* Route name */}
-        <Text style={styles.routeName}>
-          {icon} {route.name}
-        </Text>
+        <View style={styles.routeHeader}>
+          <Text style={[styles.routeName, { color: colors.text }]}>{route.name}</Text>
+          <Text style={[styles.routeType, { color: colors.primaryDark, backgroundColor: colors.surfaceLight }]}>{typeLabel}</Text>
+        </View>
 
         {/* Live stats */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Vitesse</Text>
-            <Text style={styles.statValue}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Vitesse</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}> 
               {currentPoint ? formatSpeed(currentPoint.speed) : '0.0'} km/h
             </Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Distance</Text>
-            <Text style={styles.statValue}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Distance</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}> 
               {formatDistance(route.distance)} km
             </Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Vit. moy.</Text>
-            <Text style={styles.statValue}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Vit. moy.</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}> 
               {msToKmh(route.avgSpeed).toFixed(1)} km/h
             </Text>
           </View>
@@ -203,7 +204,7 @@ export default function ReplayScreen() {
         </View>
 
         {status === 'finished' && (
-          <Text style={styles.finishedText}>✅ Lecture terminée</Text>
+          <Text style={[styles.finishedText, { color: colors.success }]}>Lecture terminée</Text>
         )}
       </View>
     </View>
@@ -219,28 +220,38 @@ const styles = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.lg,
   },
   controls: {
-    backgroundColor: COLORS.background,
     borderTopLeftRadius: BORDER_RADIUS.xl,
     borderTopRightRadius: BORDER_RADIUS.xl,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.xl,
     paddingHorizontal: SPACING.md,
+    borderTopWidth: 1,
+  },
+  routeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
   },
   routeName: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.lg,
     fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
+  },
+  routeType: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.full,
   },
   statsRow: {
     flexDirection: 'row',
@@ -251,12 +262,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.xs,
     textTransform: 'uppercase',
   },
   statValue: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.md,
     fontWeight: '700',
   },
@@ -267,7 +276,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   finishedText: {
-    color: COLORS.success,
     fontSize: FONT_SIZE.md,
     fontWeight: '700',
     textAlign: 'center',

@@ -3,8 +3,9 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGPSStore } from '../stores/gpsStore';
-import { RootStackParamList } from '../types';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
+import type { RootStackParamList } from '../types';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import {
   formatDistance,
   formatSpeed,
@@ -14,13 +15,13 @@ import {
   maxSpeed,
 } from '../utils/gps';
 import FloatingButton from '../components/FloatingButton';
-import { buildSavedRouteFromDraft, clearPendingRecordingDraft } from '../utils/recordingDraft';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function RecordingScreen() {
   const navigation = useNavigation<NavProp>();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const colors = useThemeStore((s) => s.colors);
 
   const {
     status,
@@ -49,41 +50,44 @@ export default function RecordingScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Big timer */}
-      <Text style={styles.timer}>{formatDuration(elapsed)}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+      <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+        <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>Enregistrement actif</Text>
+        <Text style={[styles.timer, { color: colors.text }]}>{formatDuration(elapsed)}</Text>
+        <Text style={[styles.heroHint, { color: colors.textSecondary }]}>GhostMap suit votre allure en continu.</Text>
+      </View>
 
       {/* Stats grid */}
       <View style={styles.grid}>
-        <View style={styles.gridItem}>
-          <Text style={styles.gridIcon}>📏</Text>
-          <Text style={styles.gridValue}>{formatDistance(distance)}</Text>
-          <Text style={styles.gridLabel}>km</Text>
+        <View style={[styles.gridItem, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+          <Text style={[styles.gridMetric, { color: colors.primaryDark }]}>Distance</Text>
+          <Text style={[styles.gridValue, { color: colors.text }]}>{formatDistance(distance)}</Text>
+          <Text style={[styles.gridLabel, { color: colors.textSecondary }]}>km</Text>
         </View>
-        <View style={styles.gridItem}>
-          <Text style={styles.gridIcon}>⚡</Text>
-          <Text style={styles.gridValue}>{formatSpeed(currentSpeed)}</Text>
-          <Text style={styles.gridLabel}>km/h</Text>
+        <View style={[styles.gridItem, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+          <Text style={[styles.gridMetric, { color: colors.accent }]}>Instantanée</Text>
+          <Text style={[styles.gridValue, { color: colors.text }]}>{formatSpeed(currentSpeed)}</Text>
+          <Text style={[styles.gridLabel, { color: colors.textSecondary }]}>km/h</Text>
         </View>
-        <View style={styles.gridItem}>
-          <Text style={styles.gridIcon}>📊</Text>
-          <Text style={styles.gridValue}>{msToKmh(avg).toFixed(1)}</Text>
-          <Text style={styles.gridLabel}>moy. km/h</Text>
+        <View style={[styles.gridItem, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+          <Text style={[styles.gridMetric, { color: colors.success }]}>Moyenne</Text>
+          <Text style={[styles.gridValue, { color: colors.text }]}>{msToKmh(avg).toFixed(1)}</Text>
+          <Text style={[styles.gridLabel, { color: colors.textSecondary }]}>km/h</Text>
         </View>
-        <View style={styles.gridItem}>
-          <Text style={styles.gridIcon}>🚀</Text>
-          <Text style={styles.gridValue}>{msToKmh(max).toFixed(1)}</Text>
-          <Text style={styles.gridLabel}>max km/h</Text>
+        <View style={[styles.gridItem, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+          <Text style={[styles.gridMetric, { color: colors.warning }]}>Max</Text>
+          <Text style={[styles.gridValue, { color: colors.text }]}>{msToKmh(max).toFixed(1)}</Text>
+          <Text style={[styles.gridLabel, { color: colors.textSecondary }]}>km/h</Text>
         </View>
       </View>
 
       {/* GPS points counter */}
-      <Text style={styles.pointsCount}>📍 {points.length} points GPS</Text>
+      <Text style={[styles.pointsCount, { color: colors.textSecondary }]}>{points.length} points GPS</Text>
 
       {/* Status indicator */}
-      <View style={styles.statusRow}>
-        <View style={[styles.statusDot, status === 'recording' && styles.statusDotActive]} />
-        <Text style={styles.statusText}>
+      <View style={[styles.statusRow, { backgroundColor: colors.surfaceLight }]}> 
+        <View style={[styles.statusDot, { backgroundColor: status === 'recording' ? colors.danger : colors.textSecondary }]} />
+        <Text style={[styles.statusText, { color: colors.textSecondary }]}>
           {status === 'recording' ? 'Enregistrement en cours...' : 'En pause'}
         </Text>
       </View>
@@ -105,17 +109,33 @@ export default function RecordingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: SPACING.lg,
   },
+  heroCard: {
+    width: '100%',
+    borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  heroLabel: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   timer: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.hero,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
-    marginBottom: SPACING.xl,
+    marginTop: SPACING.sm,
+  },
+  heroHint: {
+    marginTop: SPACING.xs,
+    fontSize: FONT_SIZE.sm,
   },
   grid: {
     flexDirection: 'row',
@@ -125,28 +145,28 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     width: '45%',
-    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
     alignItems: 'center',
+    borderWidth: 1,
   },
-  gridIcon: {
-    fontSize: 24,
+  gridMetric: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: SPACING.xs,
   },
   gridValue: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.xxl,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   gridLabel: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.sm,
     marginTop: SPACING.xs,
   },
   pointsCount: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.md,
     marginBottom: SPACING.lg,
   },
@@ -155,18 +175,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm,
     marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
   },
   statusDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: COLORS.textSecondary,
-  },
-  statusDotActive: {
-    backgroundColor: COLORS.danger,
   },
   statusText: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.md,
   },
   buttonContainer: {

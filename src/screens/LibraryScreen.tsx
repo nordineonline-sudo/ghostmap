@@ -9,21 +9,22 @@ import {
   TouchableOpacity,
   Alert,
   Share,
-  Platform,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRouteStore } from '../stores/routeStore';
-import { RootStackParamList, RouteType, SavedRoute } from '../types';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
+import { useThemeStore } from '../stores/themeStore';
+import type { RootStackParamList, RouteType, SavedRoute } from '../types';
+import { SPACING, FONT_SIZE, BORDER_RADIUS } from '../constants/theme';
 import RouteCard from '../components/RouteCard';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LibraryScreen() {
   const navigation = useNavigation<NavProp>();
+  const colors = useThemeStore((s) => s.colors);
   const { routes, loading, loadRoutes, deleteRoute } = useRouteStore();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RouteType | 'all'>('all');
@@ -90,11 +91,14 @@ export default function LibraryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>📚 Mes Parcours</Text>
-        <Text style={styles.count}>
+      <View style={[styles.headerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>Mes parcours</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Retrouvez vos sorties et relancez un ghost en quelques secondes.</Text>
+        </View>
+        <Text style={[styles.count, { color: colors.primaryDark }]}>
           {filteredRoutes.length} parcours
         </Text>
       </View>
@@ -102,11 +106,11 @@ export default function LibraryScreen() {
       {/* Search */}
       <View style={styles.searchRow}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
           value={search}
           onChangeText={setSearch}
-          placeholder="🔍 Rechercher..."
-          placeholderTextColor={COLORS.textSecondary}
+          placeholder="Rechercher un trajet"
+          placeholderTextColor={colors.textSecondary}
         />
       </View>
 
@@ -115,16 +119,19 @@ export default function LibraryScreen() {
         {(['all', 'bike', 'walk'] as const).map((f) => (
           <TouchableOpacity
             key={f}
-            style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
+            style={[
+              styles.filterBtn,
+              { backgroundColor: filter === f ? colors.primary : colors.surface, borderColor: filter === f ? colors.primary : colors.border },
+            ]}
             onPress={() => setFilter(f)}
           >
             <Text
               style={[
                 styles.filterText,
-                filter === f && styles.filterTextActive,
+                { color: filter === f ? colors.white : colors.textSecondary },
               ]}
             >
-              {f === 'all' ? '🗂 Tous' : f === 'bike' ? '🚴 Vélo' : '🚶 Marche'}
+              {f === 'all' ? 'Tous' : f === 'bike' ? 'Vélo' : 'Marche'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -140,13 +147,15 @@ export default function LibraryScreen() {
           <RefreshControl
             refreshing={loading}
             onRefresh={loadRoutes}
-            tintColor={COLORS.primary}
+            tintColor={colors.primary}
           />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🗺️</Text>
-            <Text style={styles.emptyText}>
+            <View style={[styles.emptyBadge, { backgroundColor: colors.surfaceLight }]}> 
+              <Text style={[styles.emptyBadgeText, { color: colors.primaryDark }]}>Trajets</Text>
+            </View>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {search || filter !== 'all'
                 ? 'Aucun parcours trouvé'
                 : 'Aucun parcours enregistré\nLancez votre premier tracking !'}
@@ -171,35 +180,44 @@ export default function LibraryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xxl,
-    paddingBottom: SPACING.md,
+  },
+  headerCard: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.md,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
   },
   title: {
-    color: COLORS.text,
     fontSize: FONT_SIZE.xl,
     fontWeight: '800',
   },
-  count: {
-    color: COLORS.textSecondary,
+  subtitle: {
+    marginTop: SPACING.xs,
     fontSize: FONT_SIZE.sm,
+    lineHeight: 20,
+    maxWidth: 240,
+  },
+  count: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
   },
   searchRow: {
     paddingHorizontal: SPACING.md,
     marginBottom: SPACING.sm,
   },
   searchInput: {
-    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    color: COLORS.text,
     fontSize: FONT_SIZE.md,
     padding: SPACING.md,
   },
@@ -213,36 +231,34 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.surface,
-  },
-  filterBtnActive: {
-    backgroundColor: COLORS.primary,
+    borderWidth: 1,
   },
   filterText: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.sm,
     fontWeight: '600',
-  },
-  filterTextActive: {
-    color: COLORS.white,
   },
   flatList: {
     flex: 1,
   },
   list: {
-    flexGrow: 0,
+    flexGrow: 1,
     paddingBottom: SPACING.xxl,
   },
   empty: {
     alignItems: 'center',
     paddingTop: SPACING.xxl * 2,
   },
-  emptyIcon: {
-    fontSize: 64,
+  emptyBadge: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
     marginBottom: SPACING.md,
   },
+  emptyBadgeText: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '800',
+  },
   emptyText: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZE.md,
     textAlign: 'center',
     lineHeight: 24,

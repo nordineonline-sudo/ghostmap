@@ -150,9 +150,14 @@ eas build --profile production --platform android
 
 ## Version
 
-**0.9.7.0**
+**1.0.0.0**
 
 ### Changelog
+
+#### v1.0.0.0
+- Publication de la première version majeure de GhostMap
+- Refonte visuelle de l'application et des assets Expo
+- Harmonisation de l'interface carte avec les contrôles regroupés en haut
 
 #### v0.9.7.0
 - Auto-sauvegarde du parcours en cours dans la bibliothèque si l'application se ferme avant l'enregistrement manuel

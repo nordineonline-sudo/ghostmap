@@ -1,23 +1,25 @@
-import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Location from 'expo-location';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BORDER_RADIUS, FONT_SIZE, SPACING } from '../constants/theme';
+import FloatingButton from '../components/FloatingButton';
+import LeafletMap, { MapMarker, MapPolyline } from '../components/LeafletMap';
+import StatsOverlay from '../components/StatsOverlay';
+import { useCustomStore } from '../stores/customStore';
 import { useGPSStore } from '../stores/gpsStore';
 import { useThemeStore } from '../stores/themeStore';
-import { useCustomStore } from '../stores/customStore';
-import { RootStackParamList } from '../types';
-import StatsOverlay from '../components/StatsOverlay';
-import LeafletMap, { MapPolyline, MapMarker } from '../components/LeafletMap';
+import type { RootStackParamList } from '../types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function MapScreen() {
   const navigation = useNavigation<NavProp>();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const COLORS = useThemeStore((s) => s.colors);
+  const colors = useThemeStore((s) => s.colors);
   const custom = useCustomStore();
   const insets = useSafeAreaInsets();
   const [mapCenter, setMapCenter] = useState<{ latitude: number; longitude: number } | undefined>();
@@ -47,37 +49,35 @@ export default function MapScreen() {
     requestPermissions,
   } = useGPSStore();
 
-  // Request permissions on mount & get initial location
   useEffect(() => {
     (async () => {
       const granted = await requestPermissions();
       if (!granted) {
-        Alert.alert(
-          'Permission requise',
-          'GhostMap a besoin de la localisation GPS pour fonctionner.',
-        );
+        Alert.alert('Permission requise', 'GhostMap a besoin de la localisation GPS pour fonctionner.');
         return;
       }
+
       try {
         const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         setMapCenter({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
       } catch {}
     })();
-  }, []);
+  }, [requestPermissions]);
 
-  // Timer for elapsed time
   useEffect(() => {
     if (status === 'recording') {
       timerRef.current = setInterval(tick, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
     }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [status]);
 
-  // Center map on current position during recording
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [status, tick]);
+
   useEffect(() => {
     if (currentPosition && status === 'recording') {
       setMapCenter({ latitude: currentPosition.latitude, longitude: currentPosition.longitude });
@@ -87,11 +87,14 @@ export default function MapScreen() {
   const handleStartStop = useCallback(async () => {
     if (status === 'idle' || status === 'stopped') {
       await startTracking(4000);
-    } else if (status === 'recording') {
+      return;
+    }
+
+    if (status === 'recording') {
       stopTracking();
       navigation.navigate('SaveRoute');
     }
-  }, [status, startTracking, stopTracking, navigation]);
+  }, [navigation, startTracking, status, stopTracking]);
 
   const centerOnUser = useCallback(async () => {
     try {
@@ -105,39 +108,46 @@ export default function MapScreen() {
   }, [currentPosition]);
 
   const handleZoomIn = useCallback(() => {
-    setZoom((z) => Math.min(z + 1, 19));
+    setZoom((value) => Math.min(value + 1, 19));
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    setZoom((z) => Math.max(z - 1, 3));
+    setZoom((value) => Math.max(value - 1, 3));
   }, []);
 
   const polylines = useMemo<MapPolyline[]>(() => {
-    if (points.length < 2) return [];
-    return [{
-      id: 'track',
-      coordinates: points.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
-      color: custom.trackColor,
-      width: 4,
-    }];
-  }, [points, custom.trackColor]);
+    if (points.length < 2) {
+      return [];
+    }
+
+    return [
+      {
+        id: 'track',
+        coordinates: points.map((point) => ({ latitude: point.latitude, longitude: point.longitude })),
+        color: custom.trackColor,
+        width: 4,
+      },
+    ];
+  }, [custom.trackColor, points]);
 
   const markers = useMemo<MapMarker[]>(() => {
-    if (!currentPosition) return [];
-    const isDot = custom.userIcon.endsWith('-dot');
-    return [{
-      id: 'user',
-      coordinate: { latitude: currentPosition.latitude, longitude: currentPosition.longitude },
-      emoji: isDot ? '●' : custom.userIcon,
-    }];
-  }, [currentPosition, custom.userIcon]);
+    if (!currentPosition) {
+      return [];
+    }
 
-  const currentSpeed = currentPosition?.speed ?? 0;
+    return [
+      {
+        id: 'user',
+        coordinate: { latitude: currentPosition.latitude, longitude: currentPosition.longitude },
+        emoji: custom.userIcon.endsWith('-dot') ? '●' : custom.userIcon,
+      },
+    ];
+  }, [currentPosition, custom.userIcon]);
 
   return (
     <View style={styles.container}>
       <LeafletMap
-        tileUrl={COLORS.tileUrl}
+        tileUrl={colors.tileUrl}
         center={mapCenter}
         zoom={zoom}
         polylines={polylines}
@@ -147,53 +157,45 @@ export default function MapScreen() {
         userDotColor={custom.userIconColor || custom.trackColor}
       />
 
-      {/* Compact stats at the top, next to the hamburger menu */}
       {status === 'recording' && (
-        <View style={[styles.statsBar, { top: insets.top + 12 }]}>
-          <StatsOverlay
-            distance={distance}
-            speed={currentSpeed}
-            elapsed={elapsed}
-            compact
-          />
+        <View style={[styles.statsBar, { top: insets.top + 12 }]}> 
+          <StatsOverlay distance={distance} speed={currentPosition?.speed ?? 0} elapsed={elapsed} compact />
         </View>
       )}
 
-      {/* Top-right command buttons */}
-      <View style={[styles.sideButtons, { top: insets.top + 12 }]}>
-        <TouchableOpacity style={styles.sideBtn} onPress={handleZoomIn} activeOpacity={0.7}>
-          <Text style={styles.sideBtnIcon}>＋</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.sideBtn} onPress={handleZoomOut} activeOpacity={0.7}>
-          <Text style={styles.sideBtnIcon}>﹣</Text>
-        </TouchableOpacity>
-
+      <View style={[styles.sideButtons, { top: insets.top + 12 }]}> 
         <TouchableOpacity
-          style={styles.sideBtn}
+          style={[styles.sideBtn, { backgroundColor: colors.overlay, borderColor: colors.border }]}
+          onPress={handleZoomIn}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.sideBtnIcon, { color: colors.text }]}>＋</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sideBtn, { backgroundColor: colors.overlay, borderColor: colors.border }]}
+          onPress={handleZoomOut}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.sideBtnIcon, { color: colors.text }]}>﹣</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sideBtn, { backgroundColor: colors.overlay, borderColor: colors.border }]}
           onPress={centerOnUser}
           activeOpacity={0.7}
         >
-          <Text style={styles.sideBtnIcon}>📍</Text>
+          <Text style={[styles.sideBtnIcon, { color: colors.text }]}>◎</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.sideBtn,
-            { backgroundColor: status === 'recording' ? COLORS.danger : COLORS.primary },
-          ]}
+        <FloatingButton
+          icon={status === 'recording' ? '⏹' : '⏺'}
+          label={status === 'recording' ? 'Arreter' : 'Demarrer'}
+          variant={status === 'recording' ? 'danger' : 'primary'}
+          size="md"
           onPress={handleStartStop}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.sideBtnIcon}>
-            {status === 'recording' ? '⏹' : '⏺'}
-          </Text>
-        </TouchableOpacity>
+          style={styles.actionButton}
+        />
       </View>
 
-      {/* Version watermark */}
-      <Text style={styles.versionBadge}>
-        GhostMap v0.9.7.0{'\n'}mehiradev corp{'\n'}powered by Claude
-      </Text>
+      <Text style={[styles.versionBadge, { color: `${colors.text}55` }]}>GhostMap v1.0.0.0</Text>
     </View>
   );
 }
@@ -202,15 +204,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  versionBadge: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    fontSize: 8,
-    color: 'rgba(255,255,255,0.3)',
-    textAlign: 'right',
-    lineHeight: 11,
-  },
   statsBar: {
     position: 'absolute',
     left: 70,
@@ -218,23 +211,35 @@ const styles = StyleSheet.create({
   },
   sideButtons: {
     position: 'absolute',
-    right: 12,
-    gap: 10,
+    right: SPACING.md,
+    gap: SPACING.sm,
+    alignItems: 'flex-end',
   },
   sideBtn: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    borderWidth: 1,
+    shadowColor: '#17324D',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
   },
   sideBtnIcon: {
     fontSize: 18,
+    fontWeight: '700',
+  },
+  actionButton: {
+    minWidth: 132,
+  },
+  versionBadge: {
+    position: 'absolute',
+    left: SPACING.lg,
+    bottom: 10,
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
   },
 });
